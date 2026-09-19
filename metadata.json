@@ -1,0 +1,6 @@
+{
+  "name": "ColumMaster Pro - Diseñador Estructural de Columnas",
+  "description": "Diseño y verificación estructural de columnas de hormigón armado, acero y madera según ACI 318, Eurocódigos y Normas Cubanas (NC). Diagramas de interacción P-M, generador de combinaciones de carga D+L con ejemplos de viviendas económicas, simulador de falla, análisis de confiabilidad Monte Carlo con histograma Recharts, comparativas de normas y asistente de optimización de secciones.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
