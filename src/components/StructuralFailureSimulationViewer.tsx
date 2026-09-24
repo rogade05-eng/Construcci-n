@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   MaterialType,
   DesignStandard,
@@ -16,7 +17,17 @@ import {
 } from '../types';
 import { FailureReliabilitySection } from './FailureReliabilitySection';
 import { SectionOptimizationResult } from '../engine/sectionOptimizer';
-import { Activity, BarChart2 } from 'lucide-react';
+import {
+  Activity,
+  BarChart2,
+  AlertTriangle,
+  AlertOctagon,
+  Flame,
+  Play,
+  Pause,
+  RotateCcw,
+  Zap,
+} from 'lucide-react';
 
 export type FailureScenarioId =
   | 'axial_crushing'
@@ -255,8 +266,8 @@ export const StructuralFailureSimulationViewer: React.FC<StructuralFailureSimula
   onApplyOptimizedSection,
   onOpenOptimizationModal,
 }) => {
-  // Pestaña activa del Visor: Histograma de Confiabilidad o Cinemática 2D
-  const [activeViewerTab, setActiveViewerTab] = useState<'reliability_histogram' | 'kinematic_sim'>('reliability_histogram');
+  // Pestaña activa del Visor: Cinemática 2D por defecto para visualización inmediata con Framer Motion
+  const [activeViewerTab, setActiveViewerTab] = useState<'reliability_histogram' | 'kinematic_sim'>('kinematic_sim');
 
   // Filtrar escenarios aplicables al material actual
   const applicableScenarios = FAILURE_SCENARIOS.filter((s) =>
@@ -296,7 +307,7 @@ export const StructuralFailureSimulationViewer: React.FC<StructuralFailureSimula
           if (prev >= 150) {
             return 0; // Reinicio en bucle
           }
-          return Math.min(150, prev + 0.7);
+          return Math.min(150, prev + 0.6);
         });
         animRef.current = requestAnimationFrame(step);
       };
@@ -312,6 +323,7 @@ export const StructuralFailureSimulationViewer: React.FC<StructuralFailureSimula
   // Parámetros calculados dinámicamente según el nivel de carga
   const damageFactor = Math.max(0, (loadLevel - 60) / 90); // 0 a 1 entre 60% y 150%
   const isYielded = loadLevel >= 80;
+  const isOverloaded = loadLevel > 100;
   const isFailed = loadLevel >= 115;
   const isCollapsed = loadLevel >= 135;
 
@@ -322,22 +334,36 @@ export const StructuralFailureSimulationViewer: React.FC<StructuralFailureSimula
   const topY = 40;
   const bottomY = topY + colHeightPx;
 
+  // Factor de amplificación no lineal cuando la carga excede los límites (P-Delta y fluencia plástica)
+  const overloadFactor = Math.max(0, (loadLevel - 100) / 50); // 0 a 1
+  const plasticAmplifier = 1 + Math.pow(overloadFactor, 1.5) * 1.6;
+
   // Deflexión lateral máxima en píxeles
   let maxLateralDelta = 0;
   let axialShortening = 0;
   let shearDrift = 0;
 
   if (selectedScenarioId === 'global_buckling') {
-    maxLateralDelta = (loadLevel / 100) * 45;
+    maxLateralDelta = (loadLevel / 100) * 45 * plasticAmplifier;
   } else if (selectedScenarioId === 'ductile_tension') {
-    maxLateralDelta = (loadLevel / 100) * 32;
+    maxLateralDelta = (loadLevel / 100) * 32 * plasticAmplifier;
   } else if (selectedScenarioId === 'brittle_compression') {
-    maxLateralDelta = (loadLevel / 100) * 18;
+    maxLateralDelta = (loadLevel / 100) * 18 * plasticAmplifier;
   } else if (selectedScenarioId === 'axial_crushing') {
-    axialShortening = Math.pow(loadLevel / 100, 2) * 16;
+    axialShortening = Math.pow(loadLevel / 100, 2) * 16 * plasticAmplifier;
   } else if (selectedScenarioId === 'shear_diagonal') {
-    shearDrift = (loadLevel / 100) * 26;
+    shearDrift = (loadLevel / 100) * 26 * plasticAmplifier;
   }
+
+  // Partículas de desprendimiento de recubrimiento (spalling) cuando la carga excede los límites calculados
+  const spallingDebris = useMemo(() => [
+    { id: 1, x: 154, y0: 165, size: 6, dx: -22, dy: 85, rot: 130, delay: 0 },
+    { id: 2, x: 246, y0: 175, size: 7, dx: 26, dy: 80, rot: -140, delay: 0.25 },
+    { id: 3, x: 158, y0: 195, size: 5, dx: -18, dy: 75, rot: 80, delay: 0.5 },
+    { id: 4, x: 242, y0: 210, size: 8, dx: 24, dy: 70, rot: -110, delay: 0.15 },
+    { id: 5, x: 160, y0: 145, size: 4, dx: -14, dy: 90, rot: 95, delay: 0.4 },
+    { id: 6, x: 238, y0: 225, size: 6, dx: 20, dy: 65, rot: -80, delay: 0.7 },
+  ], []);
 
   // Generador de coordenadas para la columna deformada
   // Columna modelada con 7 puntos de altura
@@ -499,24 +525,109 @@ export const StructuralFailureSimulationViewer: React.FC<StructuralFailureSimula
 
       {/* Panel Central: Lienzo Gráfico SVG (Izquierda) + Panel de Control y Diagnóstico (Derecha) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* LIENZO GRÁFICO SVG DE SIMULACIÓN */}
-        <div className="lg:col-span-6 bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col items-center justify-between relative overflow-hidden min-h-[460px]">
+        {/* LIENZO GRÁFICO SVG DE SIMULACIÓN CON FRAMER MOTION */}
+        <div
+          className={`lg:col-span-6 bg-slate-950 p-4 rounded-xl border transition-all duration-300 flex flex-col items-center justify-between relative overflow-hidden min-h-[470px] ${
+            isCollapsed
+              ? 'border-rose-500/90 shadow-2xl shadow-rose-950/70 ring-1 ring-rose-500/50'
+              : isFailed
+              ? 'border-red-500/80 shadow-xl shadow-red-950/50'
+              : isOverloaded
+              ? 'border-amber-500/70 shadow-lg shadow-amber-950/40'
+              : 'border-slate-800'
+          }`}
+        >
           {/* Etiquetas Superiores de Telemetría */}
           <div className="w-full flex items-center justify-between text-[10px] text-slate-400 border-b border-slate-800/80 pb-1.5 z-10">
             <span className="flex items-center gap-1.5 font-bold">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              SIMULACIÓN CINEMÁTICA 2D
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isCollapsed ? 'bg-rose-500 animate-ping' : isOverloaded ? 'bg-amber-400 animate-pulse' : 'bg-cyan-400'
+                }`}
+              />
+              SIMULACIÓN CINEMÁTICA & ROTURA DINÁMICA
             </span>
             <span className="font-mono">
-              ESTADO: <strong className={isCollapsed ? 'text-rose-400' : isYielded ? 'text-amber-400' : 'text-emerald-400'}>
-                {loadLevel < 70 ? 'ELÁSTICO (SERVICIO)' : loadLevel <= 100 ? 'LÍMITE NOMINAL (100%)' : loadLevel < 130 ? 'PLASTIFICACIÓN AVANZADA' : 'COLAPSO ESTRUCTURAL'}
+              ESTADO:{' '}
+              <strong
+                className={
+                  isCollapsed
+                    ? 'text-rose-400 font-extrabold'
+                    : isFailed
+                    ? 'text-red-400 font-bold'
+                    : isYielded
+                    ? 'text-amber-400 font-bold'
+                    : 'text-emerald-400'
+                }
+              >
+                {loadLevel < 70
+                  ? 'ELÁSTICO (SERVICIO)'
+                  : loadLevel <= 100
+                  ? 'LÍMITE NOMINAL (100%)'
+                  : loadLevel < 130
+                  ? 'PLASTIFICACIÓN & FLUENCIA (>100%)'
+                  : 'COLAPSO CATASTRÓFICO (150%)'}
               </strong>
             </span>
           </div>
 
-          {/* Gráfico SVG Reactivo */}
-          <div className="w-full flex items-center justify-center my-auto py-2">
-            <svg viewBox="0 0 400 420" className="w-full max-w-[360px] h-auto select-none">
+          {/* Banner Flotante Animado con Framer Motion en Sobrecarga */}
+          <AnimatePresence>
+            {isOverloaded && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className={`absolute top-10 left-3 right-3 z-30 px-3 py-1.5 rounded-lg border backdrop-blur-md shadow-2xl flex items-center justify-between gap-2 text-xs font-mono ${
+                  isCollapsed
+                    ? 'bg-rose-950/90 border-rose-500 text-rose-200 shadow-rose-950/80'
+                    : isFailed
+                    ? 'bg-red-950/90 border-red-500 text-red-200 shadow-red-950/80'
+                    : 'bg-amber-950/90 border-amber-500 text-amber-200 shadow-amber-950/80'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <motion.div
+                    animate={{
+                      rotate: isCollapsed ? [0, -8, 8, -8, 0] : [0, -5, 5, 0],
+                      scale: isCollapsed ? [1, 1.25, 1] : [1, 1.15, 1],
+                    }}
+                    transition={{ repeat: Infinity, duration: isCollapsed ? 0.4 : 0.8 }}
+                    className="shrink-0"
+                  >
+                    {isCollapsed ? (
+                      <Flame className="w-4 h-4 text-rose-400" />
+                    ) : isFailed ? (
+                      <AlertOctagon className="w-4 h-4 text-red-400" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                    )}
+                  </motion.div>
+                  <div className="truncate">
+                    <span className="font-bold">
+                      {isCollapsed
+                        ? '¡COLAPSO ESTRUCTURAL TOTAL!'
+                        : isFailed
+                        ? '¡FALLA PLÁSTICA POR SOBRECARGA!'
+                        : '¡LÍMITE NOMINAL DE DISEÑO EXCEDIDO!'}
+                    </span>
+                    <span className="hidden sm:inline text-[10px] ml-1.5 opacity-90 font-sans">
+                      ({loadLevel.toFixed(0)}% &gt; 100% φPn)
+                    </span>
+                  </div>
+                </div>
+
+                <span className="shrink-0 px-2 py-0.5 rounded bg-black/50 text-[10px] font-bold uppercase tracking-wider text-rose-300 border border-rose-600/40">
+                  {isCollapsed ? 'Mecanismo Inestable' : isFailed ? 'Fluencia Severa' : 'Rótula Plástica'}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Gráfico SVG Reactivo con Animaciones Framer Motion */}
+          <div className="w-full flex items-center justify-center my-auto py-2 relative">
+            <svg viewBox="0 0 400 420" className="w-full max-w-[360px] h-auto select-none overflow-visible">
               <defs>
                 <marker id="arrowUp" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
                   <polygon points="3,0 6,6 0,6" fill="#f43f5e" />
@@ -530,280 +641,659 @@ export const StructuralFailureSimulationViewer: React.FC<StructuralFailureSimula
                 <pattern id="hatchHormigon" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                   <line x1="0" y1="0" x2="0" y2="8" stroke="#1e293b" strokeWidth="1" />
                 </pattern>
+                {/* Filtro de resplandor para rótula y fisuras */}
+                <filter id="glowFailure" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
               </defs>
 
-              {/* Apoyos Superior e Inferior */}
-              {/* Placa/Viga superior */}
-              <rect
-                x={centerX - 70 + (selectedScenarioId === 'shear_diagonal' ? shearDrift : 0)}
-                y={topY - 18}
-                width={140}
-                height={18}
-                fill="#1e293b"
-                stroke="#64748b"
-                strokeWidth="1.5"
-                rx="2"
-              />
-              {/* Cimiento/Zapata inferior */}
-              <rect x={centerX - 80} y={bottomY} width={160} height={25} fill="#1e293b" stroke="#64748b" strokeWidth="1.5" rx="2" />
-              {/* Achurado de suelo bajo la zapata */}
-              <line x1={centerX - 70} y1={bottomY + 25} x2={centerX - 50} y2={bottomY + 35} stroke="#475569" />
-              <line x1={centerX - 30} y1={bottomY + 25} x2={centerX - 10} y2={bottomY + 35} stroke="#475569" />
-              <line x1={centerX + 10} y1={bottomY + 25} x2={centerX + 30} y2={bottomY + 35} stroke="#475569" />
-              <line x1={centerX + 50} y1={bottomY + 25} x2={centerX + 70} y2={bottomY + 35} stroke="#475569" />
-
-              {/* Cuerpo Deformado de la Columna */}
-              <path
-                d={columnPolyPath}
-                fill={material === 'wood' ? '#78350f' : material === 'steel' ? '#0369a1' : '#0f172a'}
-                stroke={isCollapsed ? '#f43f5e' : isYielded ? '#f59e0b' : '#38bdf8'}
-                strokeWidth={isCollapsed ? '2.5' : '1.8'}
-                className="transition-all duration-75"
-              />
-
-              {/* Barras Longitudinales Interiores Deformadas (si hormigón) */}
-              {material === 'concrete' && (
-                <>
-                  {/* Barra izquierda */}
-                  <path
-                    d={leftEdgePts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${(p.x + 14).toFixed(1)} ${p.y.toFixed(1)}`).join(' ')}
-                    fill="none"
-                    stroke={selectedScenarioId === 'axial_crushing' && isCollapsed ? '#ef4444' : '#f59e0b'}
-                    strokeWidth={selectedScenarioId === 'axial_crushing' && isCollapsed ? '4' : '2.5'}
-                    strokeDasharray={selectedScenarioId === 'splice_bond_slip' && isYielded ? '4 2' : 'none'}
+              {/* GRUPO PRINCIPAL CON TEMBLOR / MICRO-VIBRACIÓN PLÁSTICA EN SOBRECARGA */}
+              <motion.g
+                animate={
+                  isCollapsed
+                    ? { x: [-3.5, 3.5, -2, 2, -1, 0], y: [-1, 1.5, -0.5, 0] }
+                    : isFailed
+                    ? { x: [-2, 2, -1.2, 1.2, 0] }
+                    : isOverloaded
+                    ? { x: [-0.9, 0.9, 0] }
+                    : { x: 0, y: 0 }
+                }
+                transition={{
+                  duration: isCollapsed ? 0.12 : isFailed ? 0.2 : 0.35,
+                  repeat: isOverloaded ? Infinity : 0,
+                  repeatType: 'reverse',
+                  ease: 'easeInOut',
+                }}
+              >
+                {/* Placa/Viga superior animada con desplazamiento axial y rotación por flexión */}
+                <motion.g
+                  animate={{
+                    x: selectedScenarioId === 'shear_diagonal' ? shearDrift : 0,
+                    y: axialShortening,
+                    rotate:
+                      selectedScenarioId === 'ductile_tension' || selectedScenarioId === 'brittle_compression'
+                        ? maxLateralDelta * 0.08
+                        : 0,
+                  }}
+                  transition={{ type: 'spring', damping: 22, stiffness: 220 }}
+                >
+                  <rect
+                    x={centerX - 70}
+                    y={topY - 18}
+                    width={140}
+                    height={18}
+                    fill="#1e293b"
+                    stroke={isCollapsed ? '#f43f5e' : isYielded ? '#f59e0b' : '#64748b'}
+                    strokeWidth={isCollapsed ? '2' : '1.5'}
+                    rx="2"
                   />
-                  {/* Barra derecha */}
-                  <path
-                    d={rightEdgePts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${(p.x - 14).toFixed(1)} ${p.y.toFixed(1)}`).join(' ')}
-                    fill="none"
-                    stroke={selectedScenarioId === 'ductile_tension' && isYielded ? '#10b981' : '#f59e0b'}
-                    strokeWidth={selectedScenarioId === 'ductile_tension' && isYielded ? '3.5' : '2.5'}
-                  />
+                  {/* Perno / Marcador central de carga en cabeza */}
+                  <circle cx={centerX} cy={topY - 9} r="3" fill="#64748b" />
+                </motion.g>
 
-                  {/* Estribos Transversales */}
-                  {[0.12, 0.22, 0.35, 0.5, 0.65, 0.78, 0.88].map((ratio, idx) => {
-                    const idxPt = Math.min(numPts, Math.round(ratio * numPts));
-                    const lp = leftEdgePts[idxPt];
-                    const rp = rightEdgePts[idxPt];
-                    if (!lp || !rp) return null;
-                    const isZone0 = ratio <= 0.25 || ratio >= 0.75;
-                    const tieBroken = selectedScenarioId === 'shear_diagonal' && isCollapsed && (idx === 2 || idx === 3);
+                {/* Cimiento/Zapata inferior (empotramiento rígido) */}
+                <rect
+                  x={centerX - 80}
+                  y={bottomY}
+                  width={160}
+                  height={25}
+                  fill="#1e293b"
+                  stroke="#64748b"
+                  strokeWidth="1.5"
+                  rx="2"
+                />
+                {/* Achurado de suelo bajo la zapata */}
+                <line x1={centerX - 70} y1={bottomY + 25} x2={centerX - 50} y2={bottomY + 35} stroke="#475569" />
+                <line x1={centerX - 30} y1={bottomY + 25} x2={centerX - 10} y2={bottomY + 35} stroke="#475569" />
+                <line x1={centerX + 10} y1={bottomY + 25} x2={centerX + 30} y2={bottomY + 35} stroke="#475569" />
+                <line x1={centerX + 50} y1={bottomY + 25} x2={centerX + 70} y2={bottomY + 35} stroke="#475569" />
 
-                    if (tieBroken) {
+                {/* CUERPO DEFORMADO DE LA COLUMNA CON FRAMER MOTION */}
+                <motion.path
+                  d={columnPolyPath}
+                  fill={
+                    isCollapsed
+                      ? material === 'wood'
+                        ? '#581c0c'
+                        : material === 'steel'
+                        ? '#1e293b'
+                        : '#291316'
+                      : material === 'wood'
+                      ? '#78350f'
+                      : material === 'steel'
+                      ? '#0369a1'
+                      : '#0f172a'
+                  }
+                  stroke={isCollapsed ? '#f43f5e' : isFailed ? '#ef4444' : isYielded ? '#f59e0b' : '#38bdf8'}
+                  strokeWidth={isCollapsed ? '3' : isOverloaded ? '2.4' : '1.8'}
+                  animate={{
+                    stroke: isCollapsed
+                      ? ['#f43f5e', '#ef4444', '#f43f5e']
+                      : isFailed
+                      ? ['#ef4444', '#f59e0b', '#ef4444']
+                      : isYielded
+                      ? '#f59e0b'
+                      : '#38bdf8',
+                  }}
+                  transition={{
+                    duration: 0.8,
+                    repeat: isOverloaded ? Infinity : 0,
+                  }}
+                  filter={isCollapsed ? 'url(#glowFailure)' : 'none'}
+                />
+
+                {/* BARRAS LONGITUDINALES INTERIORES (SI HORMIGÓN) */}
+                {material === 'concrete' && (
+                  <>
+                    {/* Barra longitudinal izquierda */}
+                    <motion.path
+                      d={leftEdgePts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${(p.x + 14).toFixed(1)} ${p.y.toFixed(1)}`).join(' ')}
+                      fill="none"
+                      stroke={
+                        selectedScenarioId === 'axial_crushing' && isCollapsed
+                          ? '#ef4444'
+                          : selectedScenarioId === 'brittle_compression' && isOverloaded
+                          ? '#f43f5e'
+                          : '#f59e0b'
+                      }
+                      strokeWidth={selectedScenarioId === 'axial_crushing' && isCollapsed ? '4' : '2.5'}
+                      strokeDasharray={selectedScenarioId === 'splice_bond_slip' && isYielded ? '4 2' : 'none'}
+                      animate={{
+                        strokeWidth:
+                          selectedScenarioId === 'axial_crushing' && isCollapsed ? [3.5, 4.8, 3.5] : 2.5,
+                      }}
+                      transition={{ repeat: isCollapsed ? Infinity : 0, duration: 0.6 }}
+                    />
+                    {/* Barra longitudinal derecha */}
+                    <motion.path
+                      d={rightEdgePts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${(p.x - 14).toFixed(1)} ${p.y.toFixed(1)}`).join(' ')}
+                      fill="none"
+                      stroke={
+                        selectedScenarioId === 'ductile_tension' && isYielded
+                          ? '#10b981'
+                          : isCollapsed
+                          ? '#f43f5e'
+                          : '#f59e0b'
+                      }
+                      strokeWidth={selectedScenarioId === 'ductile_tension' && isYielded ? '3.5' : '2.5'}
+                      animate={{
+                        stroke:
+                          selectedScenarioId === 'ductile_tension' && isYielded
+                            ? ['#10b981', '#34d399', '#10b981']
+                            : '#f59e0b',
+                      }}
+                      transition={{ repeat: isYielded ? Infinity : 0, duration: 1 }}
+                    />
+
+                    {/* Estribos Transversales Confinados y Fractura en Sismo */}
+                    {[0.12, 0.22, 0.35, 0.5, 0.65, 0.78, 0.88].map((ratio, idx) => {
+                      const idxPt = Math.min(numPts, Math.round(ratio * numPts));
+                      const lp = leftEdgePts[idxPt];
+                      const rp = rightEdgePts[idxPt];
+                      if (!lp || !rp) return null;
+                      const isZone0 = ratio <= 0.25 || ratio >= 0.75;
+                      const tieBroken =
+                        selectedScenarioId === 'shear_diagonal' && isCollapsed && (idx === 2 || idx === 3);
+
+                      if (tieBroken) {
+                        return (
+                          <g key={idx}>
+                            <motion.line
+                              x1={lp.x + 10}
+                              y1={lp.y}
+                              x2={lp.x + (rp.x - lp.x) * 0.38}
+                              y2={lp.y - 2}
+                              stroke="#ef4444"
+                              strokeWidth="2.2"
+                              animate={{ x2: lp.x + (rp.x - lp.x) * 0.35 }}
+                              transition={{ repeat: Infinity, repeatType: 'reverse', duration: 0.3 }}
+                            />
+                            <motion.line
+                              x1={lp.x + (rp.x - lp.x) * 0.62}
+                              y1={lp.y + 2}
+                              x2={rp.x - 10}
+                              y2={rp.y}
+                              stroke="#ef4444"
+                              strokeWidth="2.2"
+                              animate={{ x1: lp.x + (rp.x - lp.x) * 0.65 }}
+                              transition={{ repeat: Infinity, repeatType: 'reverse', duration: 0.3 }}
+                            />
+                            {/* Marca de fractura abierta de cerco */}
+                            <circle cx={lp.x + (rp.x - lp.x) * 0.5} cy={lp.y} r="2.8" fill="#f43f5e" />
+                          </g>
+                        );
+                      }
+
                       return (
-                        <g key={idx}>
-                          <line x1={lp.x + 10} y1={lp.y} x2={lp.x + (rp.x - lp.x) * 0.4} y2={lp.y} stroke="#ef4444" strokeWidth="1.8" />
-                          <line x1={lp.x + (rp.x - lp.x) * 0.6} y1={lp.y} x2={rp.x - 10} y2={rp.y} stroke="#ef4444" strokeWidth="1.8" />
-                          {/* Marca de fractura de cerco */}
-                          <circle cx={lp.x + (rp.x - lp.x) * 0.5} cy={lp.y} r="2.5" fill="#ef4444" />
-                        </g>
+                        <line
+                          key={idx}
+                          x1={lp.x + 10}
+                          y1={lp.y}
+                          x2={rp.x - 10}
+                          y2={rp.y}
+                          stroke={isZone0 ? '#38bdf8' : '#64748b'}
+                          strokeWidth={isZone0 ? '1.8' : '1.2'}
+                        />
                       );
-                    }
+                    })}
+                  </>
+                )}
 
-                    return (
-                      <line
-                        key={idx}
-                        x1={lp.x + 10}
-                        y1={lp.y}
-                        x2={rp.x - 10}
-                        y2={rp.y}
-                        stroke={isZone0 ? '#38bdf8' : '#64748b'}
-                        strokeWidth={isZone0 ? '1.8' : '1.2'}
+                {/* RÓTULA PLÁSTICA EXPANSIVA ANIMADA EN ZONA DE MOMENTO MÁXIMO / PANDEO */}
+                {isOverloaded && (
+                  <motion.g
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{
+                      opacity: [0.45, 0.9, 0.45],
+                      scale: isCollapsed ? [1, 1.25, 1] : [1, 1.12, 1],
+                    }}
+                    transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+                  >
+                    <ellipse
+                      cx={
+                        selectedScenarioId === 'global_buckling'
+                          ? centerX + maxLateralDelta
+                          : selectedScenarioId === 'shear_diagonal'
+                          ? centerX + shearDrift * 0.5
+                          : centerX + maxLateralDelta * 0.4
+                      }
+                      cy={
+                        selectedScenarioId === 'global_buckling'
+                          ? topY + colHeightPx / 2
+                          : selectedScenarioId === 'ductile_tension' || selectedScenarioId === 'brittle_compression'
+                          ? bottomY - 35
+                          : topY + colHeightPx / 2
+                      }
+                      rx={isCollapsed ? 28 : 20}
+                      ry={isCollapsed ? 18 : 12}
+                      fill={isCollapsed ? 'rgba(244, 63, 94, 0.35)' : 'rgba(245, 158, 11, 0.25)'}
+                      stroke={isCollapsed ? '#f43f5e' : '#f59e0b'}
+                      strokeWidth="2"
+                      strokeDasharray="4 2"
+                    />
+                    <text
+                      x={
+                        selectedScenarioId === 'global_buckling'
+                          ? centerX + maxLateralDelta + 32
+                          : centerX + 36
+                      }
+                      y={
+                        selectedScenarioId === 'global_buckling'
+                          ? topY + colHeightPx / 2 + 4
+                          : bottomY - 30
+                      }
+                      fill={isCollapsed ? '#f43f5e' : '#f59e0b'}
+                      fontSize="9"
+                      fontWeight="bold"
+                      fontFamily="monospace"
+                    >
+                      RÓTULA PLÁSTICA
+                    </text>
+                  </motion.g>
+                )}
+
+                {/* FISURAS Y DAÑOS PROGRESIVOS ANIMADOS CON FRAMER MOTION */}
+                {damageFactor > 0.05 && (
+                  <g>
+                    {/* ESCENARIO 1: CORTANTE SÍSMICO (Fisuras en X diagonales a 45°) */}
+                    {selectedScenarioId === 'shear_diagonal' && (
+                      <g stroke="#f43f5e" strokeLinecap="round">
+                        <motion.path
+                          d="M 175 140 Q 200 190 230 240"
+                          fill="none"
+                          strokeWidth={Math.max(1.8, damageFactor * 4)}
+                          initial={{ pathLength: 0.2 }}
+                          animate={{
+                            pathLength: 1,
+                            strokeWidth: isCollapsed ? [3.5, 5, 3.5] : [2, 3.5, 2],
+                          }}
+                          transition={{ duration: 0.8, repeat: isOverloaded ? Infinity : 0 }}
+                        />
+                        <motion.path
+                          d="M 230 145 Q 200 190 170 235"
+                          fill="none"
+                          strokeWidth={Math.max(1.8, damageFactor * 4)}
+                          initial={{ pathLength: 0.2 }}
+                          animate={{
+                            pathLength: 1,
+                            strokeWidth: isCollapsed ? [3.5, 5, 3.5] : [2, 3.5, 2],
+                          }}
+                          transition={{ duration: 0.8, repeat: isOverloaded ? Infinity : 0, delay: 0.1 }}
+                        />
+                        {damageFactor > 0.4 && (
+                          <>
+                            <motion.path
+                              d="M 165 160 L 225 220"
+                              fill="none"
+                              strokeWidth={isCollapsed ? 3 : 2}
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                            />
+                            <motion.path
+                              d="M 225 160 L 165 220"
+                              fill="none"
+                              strokeWidth={isCollapsed ? 3 : 2}
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                            />
+                            <motion.path
+                              d="M 180 120 L 210 150"
+                              fill="none"
+                              strokeWidth={isCollapsed ? 2.5 : 1.5}
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                            />
+                          </>
+                        )}
+                      </g>
+                    )}
+
+                    {/* ESCENARIO 2: APLASTAMIENTO AXIAL PURO (Spalling y desprendimiento) */}
+                    {selectedScenarioId === 'axial_crushing' && (
+                      <g>
+                        <motion.path
+                          d="M 152 160 Q 138 185 152 210"
+                          stroke="#f43f5e"
+                          strokeWidth="2.5"
+                          fill="#f43f5e"
+                          fillOpacity={isCollapsed ? 0.5 : 0.3}
+                          animate={{ scaleX: isCollapsed ? [1, 1.25, 1] : 1 }}
+                          transition={{ repeat: isCollapsed ? Infinity : 0, duration: 0.5 }}
+                        />
+                        <motion.path
+                          d="M 248 160 Q 262 185 248 210"
+                          stroke="#f43f5e"
+                          strokeWidth="2.5"
+                          fill="#f43f5e"
+                          fillOpacity={isCollapsed ? 0.5 : 0.3}
+                          animate={{ scaleX: isCollapsed ? [1, 1.25, 1] : 1 }}
+                          transition={{ repeat: isCollapsed ? Infinity : 0, duration: 0.5 }}
+                        />
+                        <line x1="170" y1="130" x2="170" y2="230" stroke="#ef4444" strokeWidth="2" strokeDasharray="5 3" />
+                        <line x1="230" y1="130" x2="230" y2="230" stroke="#ef4444" strokeWidth="2" strokeDasharray="5 3" />
+                      </g>
+                    )}
+
+                    {/* ESCENARIO 3: FALLA FRÁGIL POR COMPRESIÓN (Cuña de hormigón triturado) */}
+                    {selectedScenarioId === 'brittle_compression' && (
+                      <g>
+                        <polygon points="155,170 175,190 155,210" fill="#f43f5e" fillOpacity="0.65" stroke="#ef4444" strokeWidth="2" />
+                        <line x1="155" y1="160" x2="170" y2="175" stroke="#f43f5e" strokeWidth="2.2" />
+                        <line x1="155" y1="220" x2="170" y2="205" stroke="#f43f5e" strokeWidth="2.2" />
+                      </g>
+                    )}
+
+                    {/* ESCENARIO 4: FALLA DÚCTIL POR TRACCIÓN (Fisuración horizontal de tracción) */}
+                    {selectedScenarioId === 'ductile_tension' && (
+                      <g stroke="#38bdf8" strokeLinecap="round">
+                        <motion.line
+                          x1="200"
+                          y1="150"
+                          x2="252"
+                          y2="150"
+                          strokeWidth={Math.max(1.8, damageFactor * 3.6)}
+                          animate={{ strokeWidth: isCollapsed ? [3, 4.5, 3] : 2 }}
+                          transition={{ repeat: isCollapsed ? Infinity : 0, duration: 0.8 }}
+                        />
+                        <motion.line
+                          x1="205"
+                          y1="175"
+                          x2="255"
+                          y2="175"
+                          strokeWidth={Math.max(1.8, damageFactor * 3.6)}
+                          animate={{ strokeWidth: isCollapsed ? [3, 4.5, 3] : 2 }}
+                          transition={{ repeat: isCollapsed ? Infinity : 0, duration: 0.8, delay: 0.1 }}
+                        />
+                        <motion.line
+                          x1="200"
+                          y1="200"
+                          x2="252"
+                          y2="200"
+                          strokeWidth={Math.max(1.8, damageFactor * 3.6)}
+                          animate={{ strokeWidth: isCollapsed ? [3, 4.5, 3] : 2 }}
+                          transition={{ repeat: isCollapsed ? Infinity : 0, duration: 0.8, delay: 0.2 }}
+                        />
+                        {damageFactor > 0.5 && (
+                          <>
+                            <line x1="210" y1="125" x2="245" y2="125" strokeWidth={isCollapsed ? 3 : 1.8} />
+                            <line x1="210" y1="225" x2="245" y2="225" strokeWidth={isCollapsed ? 3 : 1.8} />
+                          </>
+                        )}
+                      </g>
+                    )}
+
+                    {/* ESCENARIO 5: PANDEO GLOBAL POR ESBELTEZ */}
+                    {selectedScenarioId === 'global_buckling' && (
+                      <g>
+                        <circle
+                          cx={centerX + maxLateralDelta}
+                          cy={topY + colHeightPx / 2}
+                          r={damageFactor * 16}
+                          fill="#f59e0b"
+                          fillOpacity="0.45"
+                          stroke="#f59e0b"
+                          strokeWidth="2"
+                        />
+                        <line
+                          x1={centerX + maxLateralDelta}
+                          y1={topY + colHeightPx / 2 - 15}
+                          x2={centerX + maxLateralDelta + 25}
+                          y2={topY + colHeightPx / 2 - 15}
+                          stroke="#ef4444"
+                          strokeWidth="2.5"
+                        />
+                        <line
+                          x1={centerX + maxLateralDelta}
+                          y1={topY + colHeightPx / 2 + 15}
+                          x2={centerX + maxLateralDelta + 25}
+                          y2={topY + colHeightPx / 2 + 15}
+                          stroke="#ef4444"
+                          strokeWidth="2.5"
+                        />
+                      </g>
+                    )}
+
+                    {/* ESCENARIO 6: TRASLAPE / ADHERENCIA */}
+                    {selectedScenarioId === 'splice_bond_slip' && (
+                      <g stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="6 3">
+                        <line x1="165" y1="180" x2="165" y2="290" />
+                        <line x1="235" y1="180" x2="235" y2="290" />
+                      </g>
+                    )}
+
+                    {/* ESCENARIO 7: ACERO PANDEO LOCAL */}
+                    {selectedScenarioId === 'steel_local_buckling' && (
+                      <g stroke="#f43f5e" strokeWidth="3" fill="none">
+                        <path d="M 155 170 Q 138 185 155 200" />
+                        <path d="M 245 170 Q 262 185 245 200" />
+                      </g>
+                    )}
+
+                    {/* ESCENARIO 8: MADERA CIZALLAMIENTO */}
+                    {selectedScenarioId === 'wood_grain_shear' && (
+                      <g stroke="#f43f5e" strokeWidth="2" strokeDasharray="8 4">
+                        <line x1="185" y1="120" x2="185" y2="260" />
+                        <line x1="215" y1="140" x2="215" y2="280" />
+                      </g>
+                    )}
+                  </g>
+                )}
+
+                {/* DESPRENDIMIENTO Y CAÍDA DE ESCOMBROS (SPALLING DEBRIS) CON FRAMER MOTION */}
+                {isOverloaded && (
+                  <g>
+                    {spallingDebris.map((debris) => (
+                      <motion.rect
+                        key={debris.id}
+                        x={debris.x}
+                        y={debris.y0}
+                        width={debris.size}
+                        height={debris.size * 0.75}
+                        rx="1"
+                        fill={material === 'wood' ? '#92400e' : material === 'steel' ? '#475569' : '#cbd5e1'}
+                        stroke="#f43f5e"
+                        strokeWidth="0.8"
+                        initial={{ y: 0, x: 0, opacity: 0, rotate: 0 }}
+                        animate={{
+                          x: [0, debris.dx],
+                          y: [0, debris.dy * (isCollapsed ? 1.4 : 1)],
+                          opacity: [0, 1, 0.9, 0],
+                          rotate: [0, debris.rot],
+                        }}
+                        transition={{
+                          duration: isCollapsed ? 1.0 : 1.4,
+                          repeat: Infinity,
+                          delay: debris.delay,
+                          ease: 'easeIn',
+                        }}
                       />
-                    );
-                  })}
-                </>
-              )}
+                    ))}
+                  </g>
+                )}
+              </motion.g>
 
-              {/* FISURAS Y DAÑOS PROGRESIVOS ESPECÍFICOS */}
-              {damageFactor > 0.05 && (
-                <g className="transition-opacity duration-150" opacity={Math.min(1, damageFactor * 1.3)}>
-                  {/* ESCENARIO 1: CORTANTE SÍSMICO (Fisuras en X diagonales a 45°) */}
-                  {selectedScenarioId === 'shear_diagonal' && (
-                    <g stroke="#f43f5e" strokeWidth={Math.max(1.5, damageFactor * 3.5)} strokeLinecap="round">
-                      <path d="M 175 140 Q 200 190 230 240" fill="none" />
-                      <path d="M 230 145 Q 200 190 170 235" fill="none" />
-                      {damageFactor > 0.4 && (
-                        <>
-                          <path d="M 165 160 L 225 220" fill="none" />
-                          <path d="M 225 160 L 165 220" fill="none" />
-                          <path d="M 180 120 L 210 150" fill="none" />
-                        </>
-                      )}
-                    </g>
-                  )}
-
-                  {/* ESCENARIO 2: APLASTAMIENTO AXIAL PURO (Spalling y pandeo exterior) */}
-                  {selectedScenarioId === 'axial_crushing' && (
-                    <g>
-                      {/* Descascaramiento lateral de recubrimiento (spalling) */}
-                      <path d="M 152 160 Q 140 185 152 210" stroke="#f43f5e" strokeWidth="2.5" fill="#f43f5e" fillOpacity="0.3" />
-                      <path d="M 248 160 Q 260 185 248 210" stroke="#f43f5e" strokeWidth="2.5" fill="#f43f5e" fillOpacity="0.3" />
-                      {/* Fisuras verticales de rotura */}
-                      <line x1="170" y1="130" x2="170" y2="230" stroke="#ef4444" strokeWidth="2" strokeDasharray="5 3" />
-                      <line x1="230" y1="130" x2="230" y2="230" stroke="#ef4444" strokeWidth="2" strokeDasharray="5 3" />
-                    </g>
-                  )}
-
-                  {/* ESCENARIO 3: FALLA FRÁGIL POR COMPRESIÓN (Cuña de compresión en borde comprimido) */}
-                  {selectedScenarioId === 'brittle_compression' && (
-                    <g>
-                      {/* Borde comprimido izquierdo: Cuña de aplastamiento */}
-                      <polygon points="155,170 175,190 155,210" fill="#f43f5e" fillOpacity="0.6" stroke="#ef4444" strokeWidth="2" />
-                      <line x1="155" y1="160" x2="170" y2="175" stroke="#f43f5e" strokeWidth="2" />
-                      <line x1="155" y1="220" x2="170" y2="205" stroke="#f43f5e" strokeWidth="2" />
-                    </g>
-                  )}
-
-                  {/* ESCENARIO 4: FALLA DÚCTIL POR TRACCIÓN (Grietas horizontales de tracción en cara estirada) */}
-                  {selectedScenarioId === 'ductile_tension' && (
-                    <g stroke="#38bdf8" strokeWidth={Math.max(1.5, damageFactor * 3.2)} strokeLinecap="round">
-                      <line x1="200" y1="150" x2="252" y2="150" />
-                      <line x1="205" y1="175" x2="255" y2="175" />
-                      <line x1="200" y1="200" x2="252" y2="200" />
-                      {damageFactor > 0.5 && (
-                        <>
-                          <line x1="210" y1="125" x2="245" y2="125" />
-                          <line x1="210" y1="225" x2="245" y2="225" />
-                        </>
-                      )}
-                    </g>
-                  )}
-
-                  {/* ESCENARIO 5: PANDEO GLOBAL POR ESBELTEZ */}
-                  {selectedScenarioId === 'global_buckling' && (
-                    <g>
-                      {/* Rótula plástica central */}
-                      <circle cx={centerX + maxLateralDelta} cy={topY + colHeightPx / 2} r={damageFactor * 14} fill="#f59e0b" fillOpacity="0.4" stroke="#f59e0b" strokeWidth="2" />
-                      {/* Fisuras de flexión máxima */}
-                      <line x1={centerX + maxLateralDelta} y1={topY + colHeightPx / 2 - 15} x2={centerX + maxLateralDelta + 25} y2={topY + colHeightPx / 2 - 15} stroke="#ef4444" strokeWidth="2.5" />
-                      <line x1={centerX + maxLateralDelta} y1={topY + colHeightPx / 2 + 15} x2={centerX + maxLateralDelta + 25} y2={topY + colHeightPx / 2 + 15} stroke="#ef4444" strokeWidth="2.5" />
-                    </g>
-                  )}
-
-                  {/* ESCENARIO 6: TRASLAPE / ADHERENCIA */}
-                  {selectedScenarioId === 'splice_bond_slip' && (
-                    <g stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="6 3">
-                      <line x1="165" y1="180" x2="165" y2="290" />
-                      <line x1="235" y1="180" x2="235" y2="290" />
-                    </g>
-                  )}
-
-                  {/* ESCENARIO 7: ACERO PANDEO LOCAL */}
-                  {selectedScenarioId === 'steel_local_buckling' && (
-                    <g stroke="#f43f5e" strokeWidth="3" fill="none">
-                      <path d="M 155 170 Q 140 185 155 200" />
-                      <path d="M 245 170 Q 260 185 245 200" />
-                    </g>
-                  )}
-
-                  {/* ESCENARIO 8: MADERA CIZALLAMIENTO */}
-                  {selectedScenarioId === 'wood_grain_shear' && (
-                    <g stroke="#f43f5e" strokeWidth="2" strokeDasharray="8 4">
-                      <line x1="185" y1="120" x2="185" y2="260" />
-                      <line x1="215" y1="140" x2="215" y2="280" />
-                    </g>
-                  )}
-                </g>
-              )}
-
-              {/* VECTORES DE FUERZAS ACTUANTES (Flechas de carga) */}
+              {/* VECTORES DE FUERZAS ACTUANTES ANIMADOS */}
               {/* Carga Axial Pu */}
-              <g>
+              <motion.g
+                animate={{
+                  y: isOverloaded ? [0, 4, 0] : 0,
+                }}
+                transition={{ repeat: isOverloaded ? Infinity : 0, duration: 0.6 }}
+              >
                 <line
                   x1={centerX + (selectedScenarioId === 'shear_diagonal' ? shearDrift : 0)}
-                  y1={topY - 45}
+                  y1={topY - 45 + axialShortening}
                   x2={centerX + (selectedScenarioId === 'shear_diagonal' ? shearDrift : 0)}
-                  y2={topY - 20}
+                  y2={topY - 20 + axialShortening}
                   stroke="#f43f5e"
                   strokeWidth="3.5"
                   markerEnd="url(#arrowDown)"
                 />
                 <text
                   x={centerX + (selectedScenarioId === 'shear_diagonal' ? shearDrift : 0) + 8}
-                  y={topY - 32}
+                  y={topY - 32 + axialShortening}
                   fill="#f43f5e"
                   fontSize="10"
                   fontWeight="bold"
                 >
                   Pu = {Math.round(colLoads.Pu * (loadLevel / 100))} kN
                 </text>
-              </g>
+              </motion.g>
 
-              {/* Cortante Vu (si cortante o sismo) */}
+              {/* Cortante Vu */}
               {(selectedScenarioId === 'shear_diagonal' || selectedScenarioId === 'ductile_tension') && (
-                <g>
+                <motion.g
+                  animate={{
+                    x: isOverloaded ? [0, 3, 0] : 0,
+                  }}
+                  transition={{ repeat: isOverloaded ? Infinity : 0, duration: 0.5 }}
+                >
                   <line
                     x1={centerX - 80}
-                    y1={topY - 10}
+                    y1={topY - 10 + axialShortening}
                     x2={centerX - 35}
-                    y2={topY - 10}
+                    y2={topY - 10 + axialShortening}
                     stroke="#38bdf8"
                     strokeWidth="3"
                     markerEnd="url(#arrowRight)"
                   />
-                  <text x={centerX - 80} y={topY - 18} fill="#38bdf8" fontSize="9" fontWeight="bold">
+                  <text x={centerX - 80} y={topY - 18 + axialShortening} fill="#38bdf8" fontSize="9" fontWeight="bold">
                     Vu = {Math.round(colLoads.Vux * (loadLevel / 100))} kN
                   </text>
-                </g>
+                </motion.g>
               )}
 
               {/* Momento Flector Mu curvado */}
-              {(selectedScenarioId === 'ductile_tension' || selectedScenarioId === 'brittle_compression' || selectedScenarioId === 'global_buckling') && (
-                <g>
-                  <path d="M 230 45 Q 260 55 245 80" fill="none" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#arrowDown)" />
+              {(selectedScenarioId === 'ductile_tension' ||
+                selectedScenarioId === 'brittle_compression' ||
+                selectedScenarioId === 'global_buckling') && (
+                <motion.g
+                  animate={{
+                    rotate: isOverloaded ? [0, 4, 0] : 0,
+                  }}
+                  transition={{ repeat: isOverloaded ? Infinity : 0, duration: 0.7 }}
+                >
+                  <path
+                    d="M 230 45 Q 260 55 245 80"
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth="2.5"
+                    markerEnd="url(#arrowDown)"
+                  />
                   <text x="265" y="70" fill="#f59e0b" fontSize="9" fontWeight="bold">
                     Mu = {Math.round(colLoads.Mux * (loadLevel / 100))} kN·m
                   </text>
-                </g>
+                </motion.g>
               )}
             </svg>
           </div>
 
           {/* Barra de Progresión de Carga y Controles de Simulación */}
-          <div className="w-full bg-slate-900/95 p-3 rounded-lg border border-slate-800 space-y-2 z-10">
-            <div className="flex items-center justify-between text-xs">
+          <div className="w-full bg-slate-900/95 p-3 rounded-lg border border-slate-800 space-y-2.5 z-10 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="text-slate-300 font-bold flex items-center gap-1.5">
                 <span>Nivel de Solicitación:</span>
-                <span className={loadLevel > 100 ? 'text-rose-400 font-bold' : 'text-cyan-400 font-bold'}>
+                <span
+                  className={
+                    isCollapsed
+                      ? 'text-rose-400 font-extrabold'
+                      : isOverloaded
+                      ? 'text-amber-400 font-bold'
+                      : 'text-cyan-400 font-bold'
+                  }
+                >
                   {loadLevel.toFixed(0)}% de Capacidad Límite
                 </span>
               </span>
 
-              {/* Botones de Control de Animación */}
+              {/* Botón Principal de Animación Continua con Framer Motion */}
               <div className="flex items-center gap-1.5">
                 <button
+                  type="button"
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                  className={`px-3 py-1 rounded text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md ${
                     isPlaying
                       ? 'bg-amber-600 hover:bg-amber-500 text-white'
                       : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                   }`}
                 >
-                  {isPlaying ? '⏸ Pausar' : '▶ Animar'}
-                </button>
-                <button
-                  onClick={() => {
-                    setIsPlaying(false);
-                    setLoadLevel(100);
-                  }}
-                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] cursor-pointer"
-                >
-                  100%
-                </button>
-                <button
-                  onClick={() => {
-                    setIsPlaying(false);
-                    setLoadLevel(0);
-                  }}
-                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] cursor-pointer"
-                >
-                  ↺ 0%
+                  {isPlaying ? (
+                    <>
+                      <Pause className="w-3.5 h-3.5" />
+                      <span>Pausar</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5" />
+                      <span>Animar Falla</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* Slider de Carga */}
+            {/* Accesos Rápidos a Niveles Clave de Carga */}
+            <div className="grid grid-cols-4 gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setLoadLevel(0);
+                }}
+                className={`py-1 px-1.5 rounded text-[11px] font-mono transition border cursor-pointer ${
+                  loadLevel === 0
+                    ? 'bg-slate-700 text-white border-slate-500'
+                    : 'bg-slate-800/80 text-slate-400 hover:text-white border-slate-700/60'
+                }`}
+              >
+                0% Reposo
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setLoadLevel(80);
+                }}
+                className={`py-1 px-1.5 rounded text-[11px] font-mono transition border cursor-pointer ${
+                  loadLevel === 80
+                    ? 'bg-emerald-900/90 text-emerald-200 border-emerald-500'
+                    : 'bg-slate-800/80 text-emerald-400/80 hover:text-emerald-300 border-slate-700/60'
+                }`}
+              >
+                80% Servicio
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setLoadLevel(100);
+                }}
+                className={`py-1 px-1.5 rounded text-[11px] font-mono transition border cursor-pointer ${
+                  loadLevel === 100
+                    ? 'bg-amber-900/90 text-amber-200 border-amber-500'
+                    : 'bg-slate-800/80 text-amber-400/80 hover:text-amber-300 border-slate-700/60'
+                }`}
+              >
+                100% Límite φPn
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPlaying(false);
+                  setLoadLevel(150);
+                }}
+                className={`py-1 px-1.5 rounded text-[11px] font-mono transition border cursor-pointer ${
+                  loadLevel === 150
+                    ? 'bg-rose-900/90 text-rose-200 border-rose-500'
+                    : 'bg-slate-800/80 text-rose-400/80 hover:text-rose-300 border-slate-700/60'
+                }`}
+              >
+                💥 150% Colapso
+              </button>
+            </div>
+
+            {/* Slider Dinámico de Carga */}
             <input
               type="range"
               min="0"
@@ -819,7 +1309,7 @@ export const StructuralFailureSimulationViewer: React.FC<StructuralFailureSimula
 
             <div className="flex justify-between text-[10px] text-slate-400">
               <span>0% (Sin Carga)</span>
-              <span>100% (Diseño Nominal φPn)</span>
+              <span className="text-amber-300/90 font-semibold">100% (Límite φPn / φMn)</span>
               <span className="text-rose-400 font-bold">150% (Colapso Total)</span>
             </div>
           </div>

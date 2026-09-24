@@ -76,6 +76,7 @@ import {
   saveAutoSavedState,
   loadHistorySnapshots,
   addHistorySnapshot,
+  generateStateSummary,
 } from './utils/autoSaveManager';
 import { AutoSaveBadge } from './components/AutoSaveBadge';
 import { HistoryModal } from './components/HistoryModal';
@@ -383,11 +384,19 @@ export default function App() {
     handleRestoreState(DEFAULT_APP_INPUTS_STATE, 'Valores de fábrica');
   };
 
-  // Deshacer rápido (restaurar la versión anterior inmediata del historial)
+  // Deshacer rápido (restaurar la versión previa más reciente que difiera del estado actual)
+  const currentSummary = useMemo(() => generateStateSummary(currentState), [currentState]);
+
+  const undoTarget = useMemo(() => {
+    return (
+      historySnapshots.find((s) => s.summary !== currentSummary) ||
+      (historySnapshots.length > 1 ? historySnapshots[1] : null)
+    );
+  }, [historySnapshots, currentSummary]);
+
   const handleQuickUndo = () => {
-    if (historySnapshots.length === 0) return;
-    const previous = historySnapshots[0];
-    handleRestoreState(previous.state, previous.title);
+    if (!undoTarget) return;
+    handleRestoreState(undoTarget.state, undoTarget.title);
   };
 
   // Material seleccionado
@@ -447,11 +456,16 @@ export default function App() {
     let W = 0.016;
 
     if (material === 'concrete') {
-      const Ig_m4 = (concreteGeom.b / 1000 * Math.pow(concreteGeom.h / 1000, 3)) / 12;
-      const Ec_kPa = concreteProps.Ec * 1000;
+      const isCirc = concreteGeom.shape === 'circular';
+      const b_m = (concreteGeom.b || 400) / 1000;
+      const h_m = isCirc ? b_m : (concreteGeom.h || 400) / 1000;
+      const Ig_m4 = isCirc
+        ? (Math.PI * Math.pow(b_m, 4)) / 64
+        : (b_m * Math.pow(h_m, 3)) / 12;
+      const Ec_kPa = (concreteProps.Ec || 25000) * 1000;
       EI = 0.4 * Ec_kPa * Ig_m4; // Rigidez agrietada 0.4 Ec Ig
-      Area = (concreteGeom.b / 1000) * (concreteGeom.h / 1000);
-      W = (concreteGeom.b / 1000 * Math.pow(concreteGeom.h / 1000, 2)) / 6;
+      Area = isCirc ? (Math.PI * Math.pow(b_m, 2)) / 4 : b_m * h_m;
+      W = isCirc ? (Math.PI * Math.pow(b_m, 3)) / 32 : (b_m * Math.pow(h_m, 2)) / 6;
     } else if (material === 'steel') {
       const Ix_m4 = steelProfile.Ix * 1e-8;
       const E_kPa = steelProps.E * 1000;
@@ -867,12 +881,22 @@ export default function App() {
       setTimeout(() => setPdfSuccessToast(null), 4000);
     } catch (error) {
       console.error('Error exportando PDF:', error);
-      alert('Hubo un inconveniente al generar el archivo PDF. Abriendo la Memoria de Cálculo...');
+      setPdfSuccessToast('Abriendo Memoria de Cálculo técnica...');
+      setTimeout(() => setPdfSuccessToast(null), 3000);
       setShowReportModal(true);
     } finally {
       setIsExportingPdfDirectly(false);
     }
   };
+
+  // Auto-cerrar el aviso de sesión restaurada a los 10 segundos
+  useEffect(() => {
+    if (!sessionRestoredNotice) return;
+    const timer = setTimeout(() => {
+      setSessionRestoredNotice(null);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [sessionRestoredNotice]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950 relative">
@@ -916,7 +940,7 @@ export default function App() {
               historyCount={historySnapshots.length}
               onOpenHistory={() => setShowHistoryModal(true)}
               onQuickUndo={handleQuickUndo}
-              canUndo={historySnapshots.length > 0}
+              canUndo={!!undoTarget}
             />
 
             <PWAInstallButton />

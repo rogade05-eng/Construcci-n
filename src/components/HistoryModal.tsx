@@ -50,6 +50,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
   const [manualTitle, setManualTitle] = useState('');
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
   const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [confirmResetFactory, setConfirmResetFactory] = useState(false);
 
   if (!isOpen) return null;
 
@@ -68,34 +70,30 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
   };
 
   const handleRestore = (snapshot: HistorySnapshot) => {
-    if (
-      confirm(
-        `¿Desea restaurar la versión "${snapshot.title}" del ${snapshot.formattedDate}?\nTodos los datos y dimensiones se ajustarán a esa instantánea.`
-      )
-    ) {
-      onRestoreState(snapshot.state, snapshot.title);
-      showNotification(`✓ Estado restaurado a: ${snapshot.title}`);
-      setTimeout(() => {
-        onClose();
-      }, 500);
-    }
+    onRestoreState(snapshot.state, snapshot.title);
+    showNotification(`✓ Estado restaurado a: ${snapshot.title}`);
+    setTimeout(() => {
+      onClose();
+    }, 450);
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('¿Eliminar esta instantánea del historial?')) {
-      const updated = deleteHistorySnapshot(id);
-      onUpdateHistory(updated);
-      showNotification('Instantánea eliminada');
-    }
+    const updated = deleteHistorySnapshot(id);
+    onUpdateHistory(updated);
+    showNotification('Instantánea eliminada del historial');
   };
 
   const handleClearAll = () => {
-    if (confirm('¿Está seguro de que desea borrar todo el historial de cambios?\n(El estado actual no se perderá)')) {
-      clearAllHistory();
-      onUpdateHistory([]);
-      showNotification('Historial de cambios vaciado');
+    if (!confirmClearAll) {
+      setConfirmClearAll(true);
+      setTimeout(() => setConfirmClearAll(false), 4000);
+      return;
     }
+    clearAllHistory();
+    onUpdateHistory([]);
+    setConfirmClearAll(false);
+    showNotification('Historial de cambios vaciado');
   };
 
   const handleExportJson = () => {
@@ -115,7 +113,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
       showNotification('✓ Copia de seguridad exportada con éxito (.json)');
     } catch (err) {
       console.error(err);
-      alert('Error al exportar archivo JSON');
+      showNotification('⚠️ Error al exportar archivo JSON');
     }
   };
 
@@ -129,24 +127,22 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
         const text = event.target?.result as string;
         const imported = importStateFromJson(text);
         if (!imported) {
-          alert('El archivo seleccionado no contiene un formato de proyecto válido de ColumMaster.');
+          showNotification('⚠️ El archivo no contiene un formato de proyecto válido de ColumMaster.');
           return;
         }
 
-        if (confirm('¿Desea cargar este proyecto y restaurar todos sus inputs y configuración?')) {
-          onRestoreState(imported.state, 'Importado de archivo');
-          if (imported.history && imported.history.length > 0) {
-            onUpdateHistory(imported.history);
-          } else {
-            const updated = addHistorySnapshot(imported.state, 'Archivo importado', 'manual');
-            onUpdateHistory(updated);
-          }
-          showNotification('✓ Proyecto e historial importados con éxito');
-          setTimeout(() => onClose(), 600);
+        onRestoreState(imported.state, 'Importado de archivo');
+        if (imported.history && imported.history.length > 0) {
+          onUpdateHistory(imported.history);
+        } else {
+          const updated = addHistorySnapshot(imported.state, 'Archivo importado', 'manual');
+          onUpdateHistory(updated);
         }
+        showNotification('✓ Proyecto e historial restaurados con éxito');
+        setTimeout(() => onClose(), 600);
       } catch (err) {
         console.error(err);
-        alert('Error al leer el archivo JSON.');
+        showNotification('⚠️ Error al leer o procesar el archivo JSON');
       }
     };
     reader.readAsText(file);
@@ -278,14 +274,34 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
           <div className="flex items-center justify-between text-xs font-mono text-slate-400 pb-1">
             <span>REGISTROS HISTÓRICOS ({historySnapshots.length})</span>
             {historySnapshots.length > 0 && (
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="text-rose-400 hover:text-rose-300 flex items-center gap-1 hover:underline transition"
-              >
-                <Trash2 className="w-3 h-3" />
-                <span>Vaciar historial</span>
-              </button>
+              confirmClearAll ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-rose-300">¿Vaciar todo?</span>
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    className="text-rose-400 hover:text-white bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-700 text-[11px] font-bold"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClearAll(false)}
+                    className="text-slate-400 hover:text-slate-200 text-[11px]"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="text-rose-400 hover:text-rose-300 flex items-center gap-1 hover:underline transition cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Vaciar historial</span>
+                </button>
+              )
             )}
           </div>
 
@@ -395,29 +411,44 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
 
         {/* Pie de acciones y restablecimiento */}
         <div className="flex flex-wrap items-center justify-between px-6 py-4 border-t border-slate-800 bg-slate-950/80 gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (
-                confirm(
-                  '¿Desea restablecer todos los datos a los valores de fábrica iniciales?\n(Se guardará una copia en el historial antes de restablecer).'
-                )
-              ) {
-                onResetToDefaults();
-                showNotification('Valores restablecidos a configuración por defecto');
-                onClose();
-              }
-            }}
-            className="px-3 py-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 border border-rose-900/60 font-mono text-xs flex items-center gap-1.5 transition"
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Restablecer a valores de fábrica</span>
-          </button>
+          {confirmResetFactory ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-rose-300 font-mono">¿Confirmar reseteo total?</span>
+              <button
+                type="button"
+                onClick={() => {
+                  onResetToDefaults();
+                  setConfirmResetFactory(false);
+                  showNotification('Valores restablecidos a configuración de fábrica');
+                  onClose();
+                }}
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-mono text-xs font-bold transition shadow"
+              >
+                Sí, restablecer
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmResetFactory(false)}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmResetFactory(true)}
+              className="px-3 py-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 border border-rose-900/60 font-mono text-xs flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Restablecer a valores de fábrica</span>
+            </button>
+          )}
 
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs font-semibold transition"
+            className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs font-semibold transition cursor-pointer"
           >
             Cerrar
           </button>

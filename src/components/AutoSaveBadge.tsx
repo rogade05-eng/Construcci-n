@@ -39,7 +39,7 @@ export const AutoSaveBadge: React.FC<AutoSaveBadgeProps> = ({
         ) : (
           <>
             <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-sm shadow-emerald-400/50" />
-            <span className="text-emerald-400 font-semibold text-[11px] hidden sm:inline flex items-center gap-1">
+            <span className="text-emerald-400 font-semibold text-[11px] hidden sm:flex items-center gap-1">
               <span>Autoguardado</span>
               {formattedTime && <span className="text-slate-400 font-normal">({formattedTime})</span>}
             </span>

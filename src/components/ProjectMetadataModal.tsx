@@ -40,9 +40,7 @@ export const ProjectMetadataModal: React.FC<ProjectMetadataModalProps> = ({
   };
 
   const handleResetDefaults = () => {
-    if (confirm('¿Desea restablecer los datos del proyecto a los valores sugeridos por defecto?')) {
-      setForm({ ...DEFAULT_PROJECT_METADATA });
-    }
+    setForm({ ...DEFAULT_PROJECT_METADATA });
   };
 
   return (

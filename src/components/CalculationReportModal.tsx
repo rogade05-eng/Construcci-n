@@ -107,6 +107,7 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
 }) => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [pdfSuccessMessage, setPdfSuccessMessage] = useState<string | null>(null);
+  const [pdfErrorMessage, setPdfErrorMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -154,10 +155,12 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
       });
 
       setPdfSuccessMessage('¡Memoria de cálculo exportada a PDF con éxito!');
+      setPdfErrorMessage(null);
       setTimeout(() => setPdfSuccessMessage(null), 4000);
     } catch (error) {
       console.error('Error al exportar PDF:', error);
-      alert('Ocurrió un error al generar el archivo PDF. Intente nuevamente o use la opción Imprimir.');
+      setPdfErrorMessage('Ocurrió un problema al generar el archivo PDF. Intente nuevamente o use la opción de imprimir.');
+      setTimeout(() => setPdfErrorMessage(null), 5000);
     } finally {
       setIsExportingPdf(false);
     }
@@ -239,6 +242,14 @@ export const CalculationReportModal: React.FC<CalculationReportModalProps> = ({
           <div className="bg-emerald-950/80 border-b border-emerald-700/60 px-6 py-2 text-xs font-mono text-emerald-300 flex items-center gap-2 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{pdfSuccessMessage}</span>
+          </div>
+        )}
+
+        {/* Mensaje de error de exportación */}
+        {pdfErrorMessage && (
+          <div className="bg-rose-950/80 border-b border-rose-700/60 px-6 py-2 text-xs font-mono text-rose-300 flex items-center gap-2 animate-in fade-in">
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>{pdfErrorMessage}</span>
           </div>
         )}
 
