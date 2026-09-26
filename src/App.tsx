@@ -68,9 +68,10 @@ import { computePDeltaAnalysis } from './engine/pDeltaEngine';
 import { PDeltaAnalysisViewer } from './components/PDeltaAnalysisViewer';
 import { LoadCombinationsGenerator } from './components/LoadCombinationsGenerator';
 import { ServiceLoads } from './engine/loadCombinationsEngine';
-import { Scale, Home, FileDown, FileSignature, Building2, Edit3, X, CheckCircle2 } from 'lucide-react';
+import { Scale, Home, FileDown, FileSignature, Building2, Edit3, X, CheckCircle2, FileJson } from 'lucide-react';
 import { exportCalculationReportPdf } from './utils/pdfExport';
 import { ProjectMetadataModal } from './components/ProjectMetadataModal';
+import { ProjectJsonModal } from './components/ProjectJsonModal';
 import {
   loadAutoSavedState,
   saveAutoSavedState,
@@ -121,6 +122,7 @@ export default function App() {
   const [activeHousingTitle, setActiveHousingTitle] = useState<string | null>(initialAutoSaved?.activeHousingTitle || null);
   const [lastServiceLoads, setLastServiceLoads] = useState<ServiceLoads | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showProjectJsonModal, setShowProjectJsonModal] = useState(false);
   const [showMaterialsModal, setShowMaterialsModal] = useState(false);
   const [showCombinedBarsTieModal, setShowCombinedBarsTieModal] = useState(false);
   const [showOptimizationModal, setShowOptimizationModal] = useState(false);
@@ -964,6 +966,17 @@ export default function App() {
               <span>📚 Catálogo</span>
             </button>
 
+            {/* BOTÓN PROYECTO JSON (EXPORTAR / IMPORTAR / COMPARTIR) */}
+            <button
+              onClick={() => setShowProjectJsonModal(true)}
+              className="px-3 py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/70 font-mono text-xs font-semibold shadow-md flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+              title="Exportar o importar configuración de diseño completa (cargas, geometría, materiales y resultados) en archivo JSON"
+            >
+              <FileJson className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">📦 Proyecto JSON</span>
+              <span className="sm:hidden">📦 JSON</span>
+            </button>
+
             {/* BOTÓN DESTACADO: EXPORTAR A PDF DIRECTO */}
             <button
               onClick={handleExportPdfDirectly}
@@ -1066,6 +1079,20 @@ export default function App() {
                   </span>
                 </div>
               )}
+            </div>
+
+            {/* Acceso Rápido a Exportar/Importar Proyecto JSON */}
+            <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+              <span className="text-[10px] text-slate-400">Configuración completa:</span>
+              <button
+                type="button"
+                onClick={() => setShowProjectJsonModal(true)}
+                className="text-[11px] font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 transition cursor-pointer hover:underline"
+                title="Abrir gestor para exportar o importar archivo JSON con cargas, geometría, materiales y resultados"
+              >
+                <FileJson className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Exportar / Importar JSON</span>
+              </button>
             </div>
           </div>
 
@@ -2264,6 +2291,27 @@ export default function App() {
         onRestoreState={handleRestoreState}
         onUpdateHistory={setHistorySnapshots}
         onResetToDefaults={handleResetToDefaults}
+      />
+
+      {/* MODAL DE EXPORTACIÓN, IMPORTACIÓN Y COMPARTICIÓN DE PROYECTO (JSON) */}
+      <ProjectJsonModal
+        isOpen={showProjectJsonModal}
+        onClose={() => setShowProjectJsonModal(false)}
+        currentState={currentState}
+        historySnapshots={historySnapshots}
+        dcr={currentDcr}
+        isSafe={currentIsSafe}
+        phiPnMax={currentPhiPnMax}
+        phiMnx={currentPhiMnx}
+        phiVn={currentPhiVn}
+        steps={currentSteps}
+        concreteResult={material === 'concrete' ? concreteResult : undefined}
+        steelResult={material === 'steel' ? steelResult : undefined}
+        woodResult={material === 'wood' ? woodResult : undefined}
+        pDeltaAnalysis={pDeltaAnalysis}
+        seismicWindResult={seismicWindResult}
+        onRestoreState={handleRestoreState}
+        onUpdateHistory={(updated) => setHistorySnapshots(updated)}
       />
     </div>
   );

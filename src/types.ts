@@ -365,6 +365,86 @@ export interface HistorySnapshot {
   state: AppInputsState;
 }
 
+export interface ProjectExportResultsSummary {
+  isSafe: boolean;
+  dcr: number;
+  status: 'OK' | 'WARNING' | 'DANGER';
+  statusText: string;
+  axialCapacityKN: number;
+  momentCapacityKNm: number;
+  shearCapacityKN: number;
+  dcrAxial: number;
+  dcrFlexure: number;
+  dcrShear: number;
+  slenderness?: {
+    isSlender: boolean;
+    slendernessRatio: number;
+    deltaNs: number;
+    magnifiedMomentKNm: number;
+  };
+  reinforcement?: {
+    summary: string;
+    totalSteelWeightKg?: number;
+    steelRatioKgM3?: number;
+    tieSpacingZoneS0?: number;
+    tieSpacingMidSpan?: number;
+  };
+  seismicWind?: {
+    isSeismicSafe?: boolean;
+    seismicDCR?: number;
+    isWindSafe?: boolean;
+    windDCR?: number;
+  };
+  checksCount: {
+    total: number;
+    passed: number;
+    warning: number;
+    failed: number;
+  };
+  stepsSummary: Array<{
+    title: string;
+    codeRef: string;
+    formula: string;
+    values: string;
+    status: 'OK' | 'WARNING' | 'DANGER';
+    comment: string;
+  }>;
+}
+
+export interface ProjectExportPackage {
+  app: string;
+  schema: 'colum_master_project_v2';
+  version: number;
+  exportedAt: string;
+  projectMetadata: ProjectMetadata;
+  inputs: AppInputsState;
+  geometryInfo: {
+    material: MaterialType;
+    heightM: number;
+    kx: number;
+    ky: number;
+    sectionDescription: string;
+    concrete?: ConcreteGeometry;
+    steel?: {
+      profileId: string;
+      designation: string;
+      dimensions: { d: number; b: number; tw: number; tf: number; A: number; Ix: number; Iy: number };
+    };
+    wood?: { b: number; h: number };
+  };
+  materialsInfo: {
+    material: MaterialType;
+    standard: DesignStandard;
+    concrete?: { name: string; fc: number; Ec?: number; density?: number };
+    rebar?: { name: string; fy: number };
+    steel?: { name: string; designation: string; Fy: number; Fu: number; E: number };
+    wood?: { name: string; species?: string; fc0: number; ft0: number; fv: number; E0mean?: number };
+  };
+  loadsInfo: ColumnLoads;
+  results: ProjectExportResultsSummary;
+  history?: HistorySnapshot[];
+}
+
 export const DEFAULT_APP_INPUTS_STATE: AppInputsState = {
   version: 1,
   lastModified: Date.now(),

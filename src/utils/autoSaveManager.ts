@@ -4,6 +4,7 @@
  */
 
 import { AppInputsState, DEFAULT_APP_INPUTS_STATE, HistorySnapshot } from '../types';
+import { parseAndValidateProjectJson } from './projectJsonManager';
 
 export const KEY_AUTOSAVE_STATE = 'colum_master_autosave_state_v1';
 export const KEY_HISTORY_SNAPSHOTS = 'colum_master_history_snapshots_v1';
@@ -216,45 +217,15 @@ export function exportStateToJson(state: AppInputsState, history: HistorySnapsho
 }
 
 /**
- * Importa y valida un archivo JSON de respaldo
+ * Importa y valida un archivo JSON de respaldo o proyecto completo
  */
 export function importStateFromJson(jsonString: string): { state: AppInputsState; history?: HistorySnapshot[] } | null {
-  try {
-    const parsed = JSON.parse(jsonString);
-    if (!parsed) return null;
-
-    const rawState = parsed.state || (parsed.loads ? parsed : null);
-    if (!rawState) return null;
-
-    const validatedState: AppInputsState = {
-      ...DEFAULT_APP_INPUTS_STATE,
-      ...rawState,
-      projectMetadata: {
-        ...DEFAULT_APP_INPUTS_STATE.projectMetadata,
-        ...(rawState.projectMetadata || {}),
-      },
-      loads: {
-        ...DEFAULT_APP_INPUTS_STATE.loads,
-        ...(rawState.loads || {}),
-      },
-      concreteGeom: {
-        ...DEFAULT_APP_INPUTS_STATE.concreteGeom,
-        ...(rawState.concreteGeom || {}),
-      },
-      tieDesign: {
-        ...DEFAULT_APP_INPUTS_STATE.tieDesign,
-        ...(rawState.tieDesign || {}),
-      },
-    };
-
-    const validatedHistory = Array.isArray(parsed.history) ? parsed.history : undefined;
-
+  const result = parseAndValidateProjectJson(jsonString);
+  if (result.isValid && result.inputsState) {
     return {
-      state: validatedState,
-      history: validatedHistory,
+      state: result.inputsState,
+      history: result.history,
     };
-  } catch (err) {
-    console.error('[Import] JSON inválido:', err);
-    return null;
   }
+  return null;
 }
