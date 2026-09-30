@@ -1,0 +1,1839 @@
+Claro. Para que sea realmente útil como documento de desarrollo, lo plantearía como un software independiente, modular y escalable, capaz de calcular cuantías de prácticamente todas las especialidades de una obra: arquitectura, estructura, cimentaciones, instalaciones, terminaciones, urbanización, seguridad, etc.
+
+# CONTRATO DE PROGRAMACIÓN
+
+## SOFTWARE INTEGRAL DE CÁLCULO DE CUANTÍAS DE CONSTRUCCIÓN
+
+### 1. DENOMINACIÓN DEL PROYECTO
+
+**Nombre provisional:** CUANTÍA CONSTRUCTIVA INTEGRAL
+
+**Tipo de software:** Aplicación profesional para medición, cuantificación y cálculo de cantidades de obra.
+
+**Naturaleza:** Software independiente, modular, extensible y preparado para funcionar sin conexión a Internet.
+
+**Objetivo principal:** Desarrollar una herramienta capaz de transformar información geométrica, planos, modelos, datos introducidos manualmente y criterios técnicos en cuantías de construcción organizadas por especialidad, elemento constructivo, unidad de medida, partida y componente.
+
+El sistema deberá permitir pasar de:
+
+**PROYECTO → ELEMENTOS CONSTRUCTIVOS → MEDICIONES → CUANTÍAS → DESGLOSE → RESUMEN DE OBRA**
+
+y, opcionalmente, posteriormente:
+
+**CUANTÍAS → MATERIALES → MANO DE OBRA → EQUIPOS → COSTOS → PRESUPUESTO.**
+
+---
+
+# 2. OBJETIVO GENERAL
+
+Desarrollar un software profesional destinado a arquitectos, ingenieros, técnicos, presupuestistas, constructores y empresas de construcción para realizar cálculos de cuantías de forma rápida, organizada, verificable y reutilizable.
+
+El programa deberá permitir calcular, como mínimo:
+
+* áreas;
+* superficies;
+* perímetros;
+* longitudes;
+* volúmenes;
+* pesos;
+* cantidades unitarias;
+* cantidades totales;
+* número de elementos;
+* desperdicios;
+* porcentajes;
+* relaciones entre elementos;
+* despieces;
+* consumos de materiales;
+* cuantías de acero;
+* cuantías de concreto;
+* cuantías de mampostería;
+* cuantías de acabados;
+* cuantías de instalaciones;
+* cuantías de equipos;
+* cuantías de elementos especiales.
+
+El software no deberá limitarse a una simple calculadora.
+
+Debe funcionar como un **motor profesional de mediciones y cuantificación de obras**.
+
+---
+
+# 3. PRINCIPIO FUNDAMENTAL DEL SISTEMA
+
+Todo cálculo deberá quedar asociado a:
+
+**Proyecto → Objeto → Elemento → Especialidad → Partida → Unidad → Fórmula → Variables → Resultado → Fuente → Observaciones.**
+
+Cada resultado deberá poder ser auditado.
+
+El usuario deberá poder conocer:
+
+* qué se calculó;
+* con qué datos;
+* mediante qué fórmula;
+* qué unidad se utilizó;
+* qué desperdicio se aplicó;
+* qué elementos fueron incluidos;
+* qué elementos fueron excluidos;
+* cuándo se realizó el cálculo;
+* quién realizó o modificó el cálculo.
+
+---
+
+# 4. ARQUITECTURA GENERAL
+
+El software deberá desarrollarse mediante una arquitectura modular.
+
+### Núcleo
+
+* motor matemático;
+* motor geométrico;
+* motor de unidades;
+* motor de fórmulas;
+* motor de cuantificación;
+* motor de reglas;
+* motor de despiece;
+* motor de conversiones;
+* motor de redondeo;
+* motor de validación;
+* motor de informes.
+
+### Módulos
+
+1. Gestión de proyectos.
+2. Geometría.
+3. Arquitectura.
+4. Movimiento de tierras.
+5. Cimentaciones.
+6. Estructuras de hormigón armado.
+7. Estructuras metálicas.
+8. Estructuras de madera.
+9. Mampostería.
+10. Cubiertas.
+11. Impermeabilización.
+12. Revestimientos.
+13. Pisos.
+14. Techos.
+15. Pintura.
+16. Carpintería.
+17. Herrería.
+18. Vidriería.
+19. Instalaciones hidráulicas.
+20. Instalaciones sanitarias.
+21. Drenaje.
+22. Instalaciones eléctricas.
+23. Telecomunicaciones.
+24. CCTV.
+25. Detección y alarma contra incendios.
+26. Protección contra incendios.
+27. Intrusión y seguridad.
+28. Climatización.
+29. Ventilación.
+30. Gas.
+31. Energía solar.
+32. Sistemas fotovoltaicos.
+33. Urbanización.
+34. Obras exteriores.
+35. Paisajismo.
+36. Equipamiento.
+37. Demoliciones.
+38. Rehabilitación.
+39. Prefabricados.
+40. Estructuras especiales.
+41. Obras provisionales.
+42. Gestión de residuos.
+43. Resumen integral de cuantías.
+
+---
+
+# 5. MÓDULO DE GESTIÓN DE PROYECTOS
+
+Cada proyecto deberá contener:
+
+* nombre;
+* código;
+* cliente;
+* ubicación;
+* proyectista;
+* empresa;
+* fecha;
+* versión;
+* descripción;
+* superficie;
+* número de niveles;
+* unidades de medida;
+* sistema de medición;
+* moneda opcional;
+* observaciones.
+
+Cada proyecto podrá contener:
+
+* edificios;
+* bloques;
+* niveles;
+* zonas;
+* locales;
+* elementos;
+* planos;
+* mediciones;
+* cuantificaciones.
+
+---
+
+# 6. SISTEMA DE UNIDADES
+
+El programa deberá disponer de un sistema universal de unidades.
+
+Longitud:
+
+* mm;
+* cm;
+* m;
+* km.
+
+Área:
+
+* mm²;
+* cm²;
+* m²;
+* ha.
+
+Volumen:
+
+* mm³;
+* cm³;
+* m³;
+* litros.
+
+Peso:
+
+* g;
+* kg;
+* t.
+
+Ángulo:
+
+* grados;
+* radianes.
+
+Unidades eléctricas:
+
+* V;
+* A;
+* W;
+* kW;
+* kWh;
+* Ω;
+* Hz.
+
+Unidades hidráulicas:
+
+* l/s;
+* l/min;
+* m³/s;
+* m³/h;
+* bar;
+* kPa.
+
+El usuario deberá poder configurar unidades predeterminadas.
+
+---
+
+# 7. MOTOR DE FÓRMULAS
+
+El sistema deberá disponer de un motor capaz de almacenar y ejecutar fórmulas.
+
+Ejemplos:
+
+**Área rectangular**
+
+A = L × H
+
+**Área de círculo**
+
+A = π × r²
+
+**Volumen**
+
+V = L × A × H
+
+**Peso**
+
+P = V × densidad
+
+**Cantidad con desperdicio**
+
+Q = Qbase × (1 + desperdicio / 100)
+
+Las fórmulas deberán poder utilizar:
+
+* variables;
+* constantes;
+* funciones matemáticas;
+* condiciones;
+* redondeos;
+* conversiones;
+* factores;
+* porcentajes;
+* desperdicios.
+
+---
+
+# 8. MOTOR DE CUANTIFICACIÓN
+
+El motor deberá permitir trabajar con diferentes métodos.
+
+### Método geométrico
+
+Basado en:
+
+* longitud;
+* ancho;
+* altura;
+* espesor;
+* radio;
+* diámetro;
+* área;
+* volumen.
+
+### Método unitario
+
+Ejemplo:
+
+Cantidad de puertas = 12 unidades.
+
+### Método compuesto
+
+Ejemplo:
+
+1 m² de muro requiere:
+
+* X bloques;
+* X kg de mortero;
+* X m² de acabado.
+
+### Método paramétrico
+
+La cantidad se obtiene a partir de parámetros del proyecto.
+
+### Método por despiece
+
+Ejemplo:
+
+Elemento estructural → barras → longitudes → cantidad → peso.
+
+---
+
+# 9. ARQUITECTURA
+
+El módulo de arquitectura deberá calcular:
+
+### Muros
+
+* longitud;
+* altura;
+* espesor;
+* superficie;
+* volumen;
+* huecos;
+* mampostería;
+* mortero;
+* revestimiento.
+
+### Tabiques
+
+* área;
+* estructura;
+* placas;
+* perfiles;
+* tornillos;
+* aislamiento;
+* masilla;
+* cintas.
+
+### Puertas
+
+* cantidad;
+* dimensiones;
+* marcos;
+* hojas;
+* herrajes.
+
+### Ventanas
+
+* cantidad;
+* ancho;
+* alto;
+* superficie;
+* perfiles;
+* vidrio;
+* accesorios.
+
+### Escaleras
+
+* peldaños;
+* contrahuellas;
+* huellas;
+* superficie;
+* volumen;
+* barandas;
+* estructura.
+
+### Locales
+
+* superficie;
+* perímetro;
+* paredes;
+* piso;
+* techo;
+* pintura;
+* revestimientos.
+
+---
+
+# 10. MOVIMIENTO DE TIERRAS
+
+Deberá calcular:
+
+* excavaciones;
+* rellenos;
+* desmontes;
+* terraplenes;
+* zanjas;
+* pozos;
+* transporte;
+* acopios;
+* compactación;
+* volumen de tierra vegetal;
+* volumen de material seleccionado.
+
+Deberá contemplar factores de:
+
+* esponjamiento;
+* compactación;
+* desperdicio.
+
+---
+
+# 11. CIMENTACIONES
+
+Deberá contemplar:
+
+### Zapatas aisladas
+
+* concreto;
+* acero;
+* encofrado;
+* excavación;
+* relleno.
+
+### Zapatas corridas
+
+* longitud;
+* sección;
+* volumen;
+* acero;
+* encofrado.
+
+### Losas de cimentación
+
+* área;
+* espesor;
+* concreto;
+* acero;
+* encofrado.
+
+### Pilotes
+
+* cantidad;
+* diámetro;
+* longitud;
+* volumen;
+* acero;
+* cabezales.
+
+### Vigas de cimentación
+
+* volumen;
+* acero;
+* encofrado.
+
+---
+
+# 12. ESTRUCTURAS DE HORMIGÓN ARMADO
+
+El sistema deberá cuantificar:
+
+* columnas;
+* vigas;
+* losas;
+* muros estructurales;
+* escaleras;
+* rampas;
+* dinteles;
+* vigas de cimentación;
+* elementos especiales.
+
+Para cada elemento deberá poder obtenerse:
+
+* volumen de concreto;
+* área de encofrado;
+* longitud de acero;
+* cantidad de barras;
+* diámetro;
+* peso de acero;
+* separaciones;
+* recubrimientos;
+* desperdicio.
+
+---
+
+# 13. MOTOR DE ACERO
+
+Se desarrollará un motor específico para acero.
+
+Deberá permitir introducir:
+
+* diámetro;
+* longitud;
+* cantidad;
+* separación;
+* peso unitario;
+* forma de barra.
+
+El sistema calculará:
+
+**Longitud total → peso unitario → peso total.**
+
+Deberá manejar:
+
+* barras rectas;
+* barras dobladas;
+* estribos;
+* ganchos;
+* solapes;
+* anclajes;
+* refuerzo superior;
+* refuerzo inferior;
+* mallas.
+
+---
+
+# 14. ESTRUCTURAS METÁLICAS
+
+Cuantificación de:
+
+* perfiles;
+* tubos;
+* ángulos;
+* canales;
+* vigas;
+* columnas;
+* cerchas;
+* correas;
+* placas;
+* pernos;
+* soldaduras;
+* pintura;
+* protección anticorrosiva.
+
+El sistema deberá poder calcular:
+
+**longitud → sección → peso por metro → peso total.**
+
+---
+
+# 15. ESTRUCTURAS DE MADERA
+
+Deberá contemplar:
+
+* vigas;
+* columnas;
+* cerchas;
+* correas;
+* entramados;
+* paneles;
+* madera de acabado;
+* uniones;
+* herrajes.
+
+---
+
+# 16. MAMPOSTERÍA
+
+Cálculo de:
+
+* bloques;
+* ladrillos;
+* piedras;
+* morteros;
+* concreto;
+* refuerzos;
+* dinteles;
+* columnas de confinamiento;
+* vigas de confinamiento.
+
+El programa deberá permitir definir consumos unitarios por m² o m³.
+
+---
+
+# 17. CUBIERTAS
+
+Deberá calcular:
+
+* superficie real de cubierta;
+* pendientes;
+* láminas;
+* tejas;
+* paneles;
+* correas;
+* estructura;
+* tornillería;
+* solapes;
+* cumbreras;
+* canalones;
+* bajantes;
+* impermeabilización.
+
+La superficie deberá poder corregirse automáticamente por pendiente.
+
+---
+
+# 18. IMPERMEABILIZACIÓN
+
+Cálculo de:
+
+* membranas;
+* impermeabilizantes;
+* imprimaciones;
+* selladores;
+* morteros;
+* juntas;
+* solapes;
+* desperdicio.
+
+---
+
+# 19. ACABADOS
+
+Módulos independientes para:
+
+* pisos;
+* azulejos;
+* cerámicas;
+* porcelanatos;
+* mármoles;
+* granitos;
+* revestimientos;
+* enchapes;
+* pintura;
+* estucos;
+* yesos;
+* morteros;
+* falsos techos.
+
+Deberá calcularse:
+
+**Superficie → material base → adhesivo → juntas → desperdicio → cantidad final.**
+
+---
+
+# 20. CARPINTERÍA
+
+Cuantificación de:
+
+* puertas;
+* ventanas;
+* muebles;
+* armarios;
+* cocinas;
+* revestimientos de madera;
+* marcos;
+* herrajes.
+
+---
+
+# 21. HERRERÍA
+
+Cálculo de:
+
+* rejas;
+* barandas;
+* escaleras;
+* puertas metálicas;
+* estructuras ligeras;
+* perfiles;
+* placas;
+* pernos;
+* soldadura;
+* pintura.
+
+---
+
+# 22. VIDRIERÍA
+
+Deberá calcular:
+
+* superficie de vidrio;
+* cantidad;
+* espesores;
+* perfiles;
+* selladores;
+* accesorios.
+
+---
+
+# 23. INSTALACIONES HIDRÁULICAS
+
+Deberá calcular:
+
+* tuberías;
+* accesorios;
+* válvulas;
+* llaves;
+* bombas;
+* depósitos;
+* aparatos sanitarios;
+* soportes;
+* aislamiento.
+
+Por cada red:
+
+**tramo → longitud → diámetro → accesorios → cantidad total.**
+
+---
+
+# 24. INSTALACIONES SANITARIAS
+
+Cálculo de:
+
+* tuberías;
+* bajantes;
+* colectores;
+* sifones;
+* registros;
+* aparatos;
+* conexiones;
+* ventilaciones;
+* pendientes;
+* excavaciones.
+
+---
+
+# 25. DRENAJE PLUVIAL
+
+Deberá cuantificar:
+
+* canalones;
+* bajantes;
+* tuberías;
+* sumideros;
+* rejillas;
+* registros;
+* drenajes;
+* colectores.
+
+---
+
+# 26. INSTALACIONES ELÉCTRICAS
+
+Deberá cuantificar:
+
+* conductores;
+* tuberías;
+* canalizaciones;
+* bandejas;
+* cajas;
+* interruptores;
+* tomacorrientes;
+* luminarias;
+* tableros;
+* protecciones;
+* puesta a tierra;
+* accesorios.
+
+El sistema deberá manejar:
+
+**punto → circuito → conductor → canalización → accesorios.**
+
+---
+
+# 27. TELECOMUNICACIONES
+
+Cálculo de:
+
+* cableado;
+* canalizaciones;
+* bandejas;
+* racks;
+* patch panels;
+* tomas;
+* conectores;
+* gabinetes.
+
+---
+
+# 28. CCTV
+
+Deberá calcular:
+
+* cámaras;
+* grabadores;
+* switches;
+* fuentes;
+* UPS;
+* racks;
+* cableado;
+* tuberías;
+* canaletas;
+* conectores;
+* soportes.
+
+Deberá existir una relación:
+
+**Cámara → recorrido → cable → alimentación → equipo → accesorios.**
+
+---
+
+# 29. DETECCIÓN Y ALARMA CONTRA INCENDIOS
+
+Cuantificación de:
+
+* detectores;
+* pulsadores;
+* sirenas;
+* módulos;
+* centrales;
+* fuentes;
+* cableado;
+* canalizaciones;
+* accesorios.
+
+---
+
+# 30. PROTECCIÓN CONTRA INCENDIOS
+
+Deberá contemplar:
+
+* extintores;
+* gabinetes;
+* hidrantes;
+* tuberías;
+* válvulas;
+* bombas;
+* depósitos;
+* rociadores;
+* señalización;
+* soportes.
+
+---
+
+# 31. SISTEMAS DE SEGURIDAD
+
+Cálculo de:
+
+* sensores;
+* contactos;
+* centrales;
+* teclados;
+* sirenas;
+* cableado;
+* canalizaciones;
+* lectores;
+* controles de acceso;
+* cerraduras eléctricas.
+
+---
+
+# 32. CLIMATIZACIÓN
+
+Deberá permitir cuantificar:
+
+* equipos;
+* conductos;
+* tuberías;
+* aislamiento;
+* rejillas;
+* difusores;
+* soportes;
+* drenajes;
+* refrigerante;
+* cableado.
+
+---
+
+# 33. VENTILACIÓN
+
+Cálculo de:
+
+* conductos;
+* ventiladores;
+* rejillas;
+* extractores;
+* compuertas;
+* soportes;
+* aislamiento.
+
+---
+
+# 34. GAS
+
+Deberá contemplar:
+
+* tuberías;
+* válvulas;
+* reguladores;
+* equipos;
+* accesorios;
+* soportes;
+* señalización.
+
+---
+
+# 35. ENERGÍA SOLAR
+
+Cálculo de:
+
+* paneles;
+* estructuras;
+* inversores;
+* baterías;
+* cables;
+* protecciones;
+* canalizaciones;
+* conectores;
+* soportes.
+
+---
+
+# 36. URBANIZACIÓN
+
+Deberá calcular:
+
+* aceras;
+* pavimentos;
+* bordillos;
+* calles;
+* drenajes;
+* redes;
+* excavaciones;
+* rellenos;
+* señalización;
+* mobiliario urbano.
+
+---
+
+# 37. PAISAJISMO
+
+Cálculo de:
+
+* áreas verdes;
+* tierra vegetal;
+* césped;
+* árboles;
+* arbustos;
+* sistemas de riego;
+* bordillos;
+* pavimentos exteriores.
+
+---
+
+# 38. DEMOLICIONES
+
+Deberá permitir cuantificar:
+
+* volumen demolido;
+* superficies;
+* elementos;
+* residuos;
+* transporte;
+* clasificación.
+
+---
+
+# 39. REHABILITACIÓN
+
+Deberá permitir comparar:
+
+**Estado existente → intervención → estado final.**
+
+Incluyendo:
+
+* demoliciones;
+* sustituciones;
+* reparaciones;
+* refuerzos;
+* acabados;
+* instalaciones.
+
+---
+
+# 40. SISTEMA DE ELEMENTOS COMPUESTOS
+
+El usuario podrá crear elementos personalizados.
+
+Ejemplo:
+
+**MURO DE 1 m²**
+
+Composición:
+
+* 12 bloques;
+* 0,018 m³ mortero;
+* 1,05 m² acabado;
+* 0,25 kg acero;
+* 0,12 h mano de obra.
+
+El programa deberá poder utilizar este elemento en cualquier proyecto.
+
+---
+
+# 41. BASE DE DATOS DE COMPONENTES
+
+La base de datos deberá almacenar:
+
+* materiales;
+* unidades;
+* densidades;
+* dimensiones;
+* pesos;
+* consumos;
+* factores;
+* desperdicios;
+* fórmulas;
+* componentes;
+* elementos constructivos.
+
+La base deberá poder modificarse sin alterar el código principal.
+
+---
+
+# 42. ELEMENTOS PERSONALIZADOS
+
+El usuario podrá crear:
+
+* nuevo material;
+* nuevo elemento;
+* nueva fórmula;
+* nueva partida;
+* nueva composición;
+* nuevo sistema constructivo;
+* nuevo tipo de instalación.
+
+---
+
+# 43. SISTEMA DE PLANTILLAS
+
+Deberá permitir crear plantillas de:
+
+* viviendas;
+* edificios;
+* hospitales;
+* escuelas;
+* oficinas;
+* industrias;
+* comercios;
+* hoteles;
+* obras exteriores.
+
+---
+
+# 44. IMPORTACIÓN DE INFORMACIÓN
+
+El software deberá poder importar, cuando técnicamente sea viable:
+
+* CSV;
+* XLSX;
+* DXF;
+* archivos de texto estructurados;
+* bases de datos;
+* información geométrica.
+
+La arquitectura deberá quedar preparada para futuras integraciones con formatos CAD/BIM.
+
+---
+
+# 45. MEDICIÓN MANUAL
+
+El usuario deberá poder introducir:
+
+* longitud;
+* ancho;
+* altura;
+* cantidad;
+* diámetro;
+* espesor;
+* área;
+* volumen.
+
+El programa calculará automáticamente el resultado.
+
+---
+
+# 46. MEDICIÓN POR PLANOS
+
+El sistema deberá quedar preparado para incorporar un módulo de medición gráfica.
+
+Funciones:
+
+* calibración;
+* escala;
+* medición de distancia;
+* medición de área;
+* conteo;
+* perímetros;
+* capas;
+* identificación de elementos.
+
+---
+
+# 47. MOTOR DE DESCUENTOS Y HUECOS
+
+Para paredes, revestimientos y superficies deberá permitir descontar:
+
+* puertas;
+* ventanas;
+* huecos;
+* columnas;
+* elementos especiales.
+
+Ejemplo:
+
+Superficie total = 120 m²
+
+Huecos = 18 m²
+
+Superficie neta = 102 m².
+
+---
+
+# 48. DESPERDICIOS
+
+Cada material podrá tener:
+
+* desperdicio predeterminado;
+* desperdicio personalizado;
+* desperdicio por elemento;
+* desperdicio por proyecto.
+
+Ejemplo:
+
+Cantidad base = 100 m²
+
+Desperdicio = 8 %
+
+Cantidad final = 108 m².
+
+---
+
+# 49. REDONDEOS
+
+Deberá configurarse:
+
+* cantidad exacta;
+* redondeo superior;
+* redondeo inferior;
+* redondeo por unidad comercial.
+
+Ejemplo:
+
+13,2 cajas → 14 cajas.
+
+---
+
+# 50. PRESENTACIÓN DE RESULTADOS
+
+Cada cuantía deberá mostrar:
+
+| Elemento | Unidad | Cantidad | Desperdicio | Total |
+| -------- | ------ | -------: | ----------: | ----: |
+
+También deberá poder mostrar:
+
+**Especialidad → Partida → Elemento → Material → Cantidad.**
+
+---
+
+# 51. INFORMES
+
+El programa deberá generar:
+
+* informe de mediciones;
+* informe de cuantías;
+* resumen por especialidad;
+* resumen por material;
+* resumen por unidad;
+* listado de elementos;
+* memoria de cálculo;
+* informe de modificaciones;
+* informe de errores;
+* informe técnico.
+
+Formatos previstos:
+
+* PDF;
+* XLSX;
+* CSV;
+* TXT.
+
+---
+
+# 52. MEMORIA DE CÁLCULO
+
+Cada cálculo complejo deberá poder generar una memoria.
+
+Ejemplo:
+
+**Elemento:** Viga V-12
+
+Longitud: 5,40 m
+
+Sección: 0,25 × 0,40 m
+
+Volumen:
+
+5,40 × 0,25 × 0,40 = 0,540 m³
+
+Resultado:
+
+**0,540 m³ de concreto.**
+
+---
+
+# 53. TRAZABILIDAD
+
+El programa deberá registrar:
+
+* fecha;
+* usuario;
+* operación;
+* elemento;
+* fórmula;
+* resultado;
+* modificación.
+
+No deberá sobrescribirse silenciosamente información crítica.
+
+---
+
+# 54. CONTROL DE VERSIONES
+
+Cada proyecto deberá permitir:
+
+* versión 1;
+* versión 2;
+* versión 3;
+* comparación;
+* recuperación;
+* duplicación.
+
+---
+
+# 55. COMPARACIÓN DE VERSIONES
+
+El sistema deberá identificar:
+
+* elementos añadidos;
+* elementos eliminados;
+* cantidades modificadas;
+* materiales modificados;
+* superficies modificadas.
+
+---
+
+# 56. VALIDACIÓN
+
+El programa deberá detectar:
+
+* dimensiones imposibles;
+* valores negativos;
+* unidades incompatibles;
+* cantidades cero;
+* fórmulas incompletas;
+* elementos sin unidad;
+* materiales sin factor;
+* resultados fuera de rango configurable.
+
+---
+
+# 57. SISTEMA DE ADVERTENCIAS
+
+Los mensajes deberán ser comprensibles.
+
+Ejemplo:
+
+> "El elemento V-12 tiene una longitud de 0,15 m. Verifique el dato introducido."
+
+No deberá limitarse a mostrar errores técnicos del programa.
+
+---
+
+# 58. INTERFAZ
+
+La interfaz deberá ser:
+
+* profesional;
+* limpia;
+* rápida;
+* de bajo consumo;
+* adecuada para Windows;
+* intuitiva;
+* orientada a técnicos.
+
+Deberá existir navegación:
+
+**Proyecto → Especialidad → Elementos → Mediciones → Resultados → Informes.**
+
+---
+
+# 59. AYUDA DINÁMICA
+
+Cada función importante deberá incorporar mensajes de:
+
+* orientación;
+* explicación;
+* ayuda;
+* advertencia;
+* ejemplo.
+
+El usuario deberá poder comprender qué debe introducir sin consultar constantemente documentación externa.
+
+---
+
+# 60. FUNCIONAMIENTO OFFLINE
+
+El software deberá funcionar sin:
+
+* Internet;
+* servidores externos;
+* APIs online;
+* cuentas obligatorias;
+* servicios cloud.
+
+Toda la información necesaria deberá almacenarse localmente.
+
+---
+
+# 61. BASE DE DATOS
+
+Se utilizará una base de datos local.
+
+La arquitectura deberá permitir:
+
+* proyectos;
+* elementos;
+* materiales;
+* fórmulas;
+* especialidades;
+* mediciones;
+* usuarios;
+* configuraciones;
+* informes.
+
+La estructura deberá estar preparada para migraciones futuras.
+
+---
+
+# 62. SEGURIDAD DE DATOS
+
+Deberán existir:
+
+* copias de seguridad;
+* restauración;
+* exportación;
+* recuperación ante errores.
+
+Los archivos de proyecto deberán poder copiarse manualmente a otra computadora.
+
+---
+
+# 63. SISTEMA DE PLUGINS
+
+El software deberá quedar preparado para incorporar posteriormente:
+
+* módulos especializados;
+* catálogos;
+* bases de datos;
+* sistemas de precios;
+* normas;
+* formatos nacionales;
+* importadores CAD;
+* herramientas BIM.
+
+Los plugins no deberán obligar a modificar el núcleo.
+
+---
+
+# 64. CONFIGURACIÓN POR PAÍS
+
+La arquitectura deberá permitir adaptar:
+
+* unidades;
+* normas;
+* nomenclaturas;
+* materiales;
+* desperdicios;
+* sistemas constructivos;
+* monedas;
+* catálogos.
+
+Se deberá evitar programar los criterios técnicos directamente dentro de la interfaz.
+
+---
+
+# 65. COMPATIBILIDAD CON FUTURO MÓDULO DE PRESUPUESTOS
+
+El sistema deberá dejar preparada la estructura para que posteriormente las cuantías puedan alimentar un módulo de presupuesto.
+
+Flujo previsto:
+
+**Cuantía → Partida → Materiales → Rendimientos → Mano de obra → Equipos → Costos → Presupuesto.**
+
+El módulo de cuantías no deberá depender obligatoriamente del módulo de presupuesto.
+
+---
+
+# 66. MOTOR DE REGLAS
+
+Deberá existir un sistema de reglas configurable.
+
+Ejemplo:
+
+Si:
+
+**Tipo de muro = bloque**
+
+entonces:
+
+**usar consumo de bloque + mortero + desperdicio.**
+
+Si:
+
+**acabado = cerámica**
+
+entonces:
+
+**calcular cerámica + adhesivo + rejunte + desperdicio.**
+
+---
+
+# 67. MOTOR DE RELACIONES
+
+Los elementos podrán relacionarse.
+
+Ejemplo:
+
+**Local → paredes → puertas → ventanas → revestimiento → pintura.**
+
+Esto permitirá evitar introducir repetidamente los mismos datos.
+
+---
+
+# 68. CÁLCULO AUTOMÁTICO GLOBAL
+
+El usuario deberá poder seleccionar:
+
+**"Calcular proyecto completo".**
+
+El programa deberá recorrer todas las especialidades habilitadas y generar un resumen integral.
+
+---
+
+# 69. RESUMEN GENERAL
+
+El sistema deberá generar:
+
+### Arquitectura
+
+* m²;
+* m³;
+* unidades.
+
+### Estructura
+
+* m³ concreto;
+* kg/t acero;
+* m² encofrado.
+
+### Instalaciones
+
+* m;
+* unidades;
+* puntos;
+* equipos.
+
+### Acabados
+
+* m²;
+* m;
+* kg;
+* unidades.
+
+### Obra exterior
+
+* m²;
+* m³;
+* m;
+* unidades.
+
+---
+
+# 70. API INTERNA
+
+Aunque el programa sea completamente offline, deberá existir una API interna o capa de servicios que permita que los módulos se comuniquen mediante interfaces claramente definidas.
+
+Ejemplo:
+
+`GeometryService`
+
+`QuantityService`
+
+`FormulaService`
+
+`MaterialService`
+
+`ReportService`
+
+`ProjectService`
+
+`ValidationService`
+
+---
+
+# 71. PRUEBAS
+
+Deberán desarrollarse pruebas:
+
+* unitarias;
+* de integración;
+* geométricas;
+* matemáticas;
+* de conversión;
+* de fórmulas;
+* de base de datos;
+* de importación;
+* de exportación.
+
+---
+
+# 72. CASOS DE PRUEBA
+
+Se deberán crear proyectos de prueba que incluyan:
+
+* vivienda;
+* edificio;
+* instalación eléctrica;
+* instalación hidráulica;
+* estructura de concreto;
+* estructura metálica;
+* cubierta;
+* acabados;
+* CCTV;
+* incendio;
+* urbanización.
+
+---
+
+# 73. PRECISIÓN
+
+Todos los cálculos deberán conservar suficiente precisión internamente.
+
+El redondeo deberá aplicarse solamente en la presentación o cuando la unidad comercial lo requiera.
+
+---
+
+# 74. RENDIMIENTO
+
+El software deberá funcionar correctamente en computadoras de recursos modestos.
+
+Se deberá evitar:
+
+* procesos innecesarios;
+* consumo excesivo de RAM;
+* servicios permanentes;
+* animaciones pesadas;
+* dependencias online.
+
+---
+
+# 75. ARQUITECTURA ESCALABLE
+
+El sistema deberá permitir incorporar posteriormente:
+
+* BIM;
+* CAD;
+* presupuesto;
+* planificación;
+* control de obra;
+* costos;
+* compras;
+* almacén;
+* productividad.
+
+Sin necesidad de reconstruir el núcleo.
+
+---
+
+# 76. SISTEMA DE CONFIGURACIÓN
+
+El usuario podrá configurar:
+
+* unidades;
+* decimales;
+* desperdicios;
+* nomenclaturas;
+* formatos;
+* especialidades activas;
+* catálogos;
+* parámetros técnicos.
+
+---
+
+# 77. COPIAS DE SEGURIDAD
+
+El sistema deberá disponer de:
+
+* backup manual;
+* backup automático configurable;
+* restauración;
+* exportación completa de proyecto.
+
+---
+
+# 78. PORTABILIDAD
+
+La aplicación deberá poder distribuirse como:
+
+**ejecutable autónomo para Windows**, minimizando dependencias externas.
+
+La instalación no deberá requerir Internet.
+
+---
+
+# 79. ESTRUCTURA DE DATOS
+
+La base deberá separar como mínimo:
+
+* proyectos;
+* edificios;
+* niveles;
+* locales;
+* elementos;
+* especialidades;
+* materiales;
+* fórmulas;
+* unidades;
+* mediciones;
+* cuantías;
+* relaciones;
+* desperdicios;
+* configuraciones;
+* informes.
+
+---
+
+# 80. RESULTADO FINAL
+
+El producto terminado deberá permitir que un técnico pueda introducir o importar la información disponible de una obra y obtener una estructura organizada de cuantías.
+
+El objetivo funcional final será:
+
+**PROYECTO**
+
+↓
+
+**GEOMETRÍA**
+
+↓
+
+**ELEMENTOS CONSTRUCTIVOS**
+
+↓
+
+**ESPECIALIDADES**
+
+↓
+
+**MEDICIONES**
+
+↓
+
+**FÓRMULAS**
+
+↓
+
+**CUANTÍAS**
+
+↓
+
+**MATERIALES**
+
+↓
+
+**RESUMEN DE OBRA**
+
+↓
+
+**EXPORTACIÓN**
+
+---
+
+# 81. CRITERIO DE ACEPTACIÓN
+
+El proyecto se considerará funcional cuando pueda realizar correctamente, como mínimo:
+
+1. Crear un proyecto.
+2. Crear niveles y locales.
+3. Definir elementos.
+4. Introducir geometría.
+5. Aplicar fórmulas.
+6. Calcular cantidades.
+7. Aplicar desperdicios.
+8. Descontar huecos.
+9. Convertir unidades.
+10. Agrupar resultados.
+11. Generar memoria de cálculo.
+12. Generar informes.
+13. Guardar el proyecto.
+14. Recuperar el proyecto.
+15. Realizar backup.
+16. Trabajar completamente offline.
+
+---
+
+# 82. FASES DE DESARROLLO
+
+## FASE 1 — NÚCLEO
+
+* arquitectura;
+* base de datos;
+* proyectos;
+* unidades;
+* fórmulas;
+* geometría;
+* cuantificación;
+* validación.
+
+## FASE 2 — ARQUITECTURA
+
+* muros;
+* locales;
+* puertas;
+* ventanas;
+* pisos;
+* techos;
+* acabados.
+
+## FASE 3 — ESTRUCTURA
+
+* cimentaciones;
+* concreto armado;
+* acero;
+* estructura metálica;
+* madera.
+
+## FASE 4 — INSTALACIONES
+
+* hidráulica;
+* sanitaria;
+* eléctrica;
+* telecomunicaciones;
+* climatización;
+* ventilación;
+* gas.
+
+## FASE 5 — SEGURIDAD
+
+* CCTV;
+* incendio;
+* intrusión;
+* control de acceso.
+
+## FASE 6 — EXTERIORES
+
+* urbanización;
+* drenaje;
+* paisajismo;
+* obras exteriores.
+
+## FASE 7 — MEDICIÓN GRÁFICA
+
+* DXF;
+* medición sobre plano;
+* escalas;
+* áreas;
+* longitudes;
+* conteos.
+
+## FASE 8 — INFORMES
+
+* PDF;
+* XLSX;
+* CSV;
+* memoria de cálculo;
+* resumen general.
+
+## FASE 9 — PERSONALIZACIÓN
+
+* elementos;
+* materiales;
+* fórmulas;
+* sistemas constructivos;
+* catálogos.
+
+## FASE 10 — OPTIMIZACIÓN
+
+* rendimiento;
+* estabilidad;
+* portabilidad;
+* pruebas;
+* recuperación de errores.
+
+---
+
+# 83. ENTREGABLES
+
+El desarrollador deberá entregar:
+
+* código fuente;
+* base de datos;
+* migraciones;
+* ejecutable;
+* instalador o versión portable;
+* documentación técnica;
+* documentación de usuario;
+* catálogo inicial;
+* conjunto de pruebas;
+* proyectos de ejemplo;
+* sistema de backup;
+* sistema de restauración.
+
+---
+
+# 84. REQUISITO FUNDAMENTAL
+
+El software no deberá estar diseñado alrededor de una única especialidad.
+
+Su núcleo deberá estar diseñado alrededor del concepto:
+
+**ELEMENTO CONSTRUCTIVO + GEOMETRÍA + REGLA + FÓRMULA + UNIDAD + RESULTADO.**
+
+Esto permitirá que una nueva especialidad pueda incorporarse mediante nuevos elementos, reglas, fórmulas y catálogos sin modificar el funcionamiento fundamental del programa.
+
+---
+
+# 85. DEFINICIÓN FINAL DEL PRODUCTO
+
+El producto será un:
+
+**SISTEMA INTEGRAL DE MEDICIÓN Y CÁLCULO DE CUANTÍAS DE CONSTRUCCIÓN MULTIESPECIALIDAD**
+
+capaz de trabajar desde elementos simples hasta proyectos completos y de servir como base para futuros sistemas de:
+
+**presupuesto + costos + planificación + control de obra + compras + almacén.**
+
+La prioridad del desarrollo será:
+
+**PRECISIÓN → TRAZABILIDAD → MODULARIDAD → VELOCIDAD → PORTABILIDAD → ESCALABILIDAD.**
+
+El software deberá ser concebido como un motor de cuantificación profesional y no como una colección de calculadoras independientes.
